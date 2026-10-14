@@ -51,11 +51,10 @@ jobs:
       - name: Download Assassin's Creed PKGs and generate metadata
         run: |
           set -euo pipefail
-          python3 -m pip install --user --upgrade gdown
-          mkdir -p "$HOME/.local/bin"
-          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
-          gdown "1KK8yqBinHkxRbuLCY4O4tJzApXvPYm2n" -O /tmp/assassins-creed-package-1.pkg
-          gdown "1OXuuN5d7hLYxABRVHHP-Qz7AV6-CC1rR" -O /tmp/assassins-creed-package-2.pkg
+          python3 -m venv /tmp/gdown-env
+          /tmp/gdown-env/bin/pip install --upgrade gdown
+          /tmp/gdown-env/bin/gdown "1KK8yqBinHkxRbuLCY4O4tJzApXvPYm2n" -O /tmp/assassins-creed-package-1.pkg
+          /tmp/gdown-env/bin/gdown "1OXuuN5d7hLYxABRVHHP-Qz7AV6-CC1rR" -O /tmp/assassins-creed-package-2.pkg
           python3 - <<'PY'
           import os, pathlib
           pairs = [
