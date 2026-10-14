@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build the PKG MUTANT SHOP dashboard tile (icon + eboot that opens our app + installer payload).
+# Build the MarkPS4 Themes dashboard tile (icon + eboot that opens our app + installer payload).
 # Reuses the SDK + user-space clang set up by ps5-app/payload/build-wsl.sh. NO sudo.
 # Usage (WSL):  bash build-wsl.sh  [PMS_URL]
 set -e
@@ -22,7 +22,7 @@ cp "$HERE/../../web/assets/icon0.png" "$WORK/$TITLE_ID/icon0.png"   # OUR logo a
 cat > "$WORK/$TITLE_ID/sce_sys/param.json" <<EOF
 {
     "applicationCategoryType": 0,
-    "localizedParameters": { "defaultLanguage": "en-US", "en-US": { "titleName": "PKG MUTANT SHOP" } },
+    "localizedParameters": { "defaultLanguage": "en-US", "en-US": { "titleName": "MarkPS4 Themes" } },
     "titleId": "$TITLE_ID"
 }
 EOF
