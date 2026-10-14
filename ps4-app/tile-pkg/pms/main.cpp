@@ -149,7 +149,7 @@ int main() {
     setvbuf(stdout, NULL, _IONBF, 0);
     Scene2D *scene = new Scene2D(W, H, 4);
     if (!scene->Init(0xC000000, 2)) {
-        printf("[MarkPS4 Themes] No se pudo iniciar el renderizador nativo.\\n");
+        printf("[MarkPS4 Themes] No se pudo iniciar el renderizador nativo.\n");
         for (;;) sceKernelUsleep(1000000);
     }
 
