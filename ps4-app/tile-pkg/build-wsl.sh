@@ -52,16 +52,8 @@ for f in sce_sys/about/right.sprx sce_module/libSceFios2.prx sce_module/libc.prx
   [ -f "$f" ] || cp "$OO_PS4_TOOLCHAIN/samples/hello_world/$f" "$f"
 done
 
-# THE PAYLOAD THIS PACKAGE CARRIES is the LITE one - the same shop with no package inside it. That
-# is what lets the icon start the shop without creating a cycle: this package carries lite, and the
-# full payload carries this package. Build order is lite -> package -> full, which is what
-# ps4-app/build-all-wsl.sh does. Handing this the FULL payload would put a package inside a package.
-PAYLOAD="$HERE/../onconsole/MARKPS4-THEMES-PS4-LITE.elf"
-if [ ! -f "$PAYLOAD" ]; then
-  echo "ABORT: the lite payload is not built - run ps4-app/build-all-wsl.sh." >&2
-  exit 1
-fi
-cp "$PAYLOAD" pms-payload.elf
+# This package contains its own native renderer and controller loop. It does not need a
+# separately launched process to draw the interface.
 
 if [ ! -f sce_sys/icon0.png ]; then
   echo "ABORT: sce_sys/icon0.png is missing - the console needs an icon for the tile." >&2
@@ -77,30 +69,6 @@ if [ ! -f "$PKG" ]; then
   echo "ABORT: no package was produced." >&2
   exit 1
 fi
-# PROVE THE PAYLOAD IS ACTUALLY IN THERE. The package is a fixed 6,619,136 bytes whether it holds
-# the payload or not - the filesystem pads - so size tells you nothing, and an app whose package
-# lost its payload cannot start the shop however well its code is written. Extract the finished
-# package and look.
-echo "== checking the package really carries the payload"
-CHK=$(mktemp -d)
-"$OO_PS4_TOOLCHAIN/bin/linux/PkgTool.Core" pkg_extract "$PKG" "$CHK" >/dev/null 2>&1 || true
-GOT="$CHK/uroot/pms-payload.elf"
-WANT=$(stat -c%s pms-payload.elf)
-if [ ! -f "$GOT" ]; then
-  echo "ABORT: the built package does not contain pms-payload.elf." >&2
-  rm -rf "$CHK"; exit 1
-fi
-HAVE=$(stat -c%s "$GOT")
-if [ "$HAVE" != "$WANT" ]; then
-  echo "ABORT: the payload inside the package is $HAVE bytes, expected $WANT." >&2
-  rm -rf "$CHK"; exit 1
-fi
-if [ "$(sha256sum "$GOT" | cut -d" " -f1)" != "$(sha256sum pms-payload.elf | cut -d" " -f1)" ]; then
-  echo "ABORT: the payload inside the package is not the one we put in." >&2
-  rm -rf "$CHK"; exit 1
-fi
-echo "   payload inside: $HAVE bytes, sha256 matches"
-rm -rf "$CHK"
-
+echo "Native PKG created; package contents are checked by the build job."
 echo "BUILT: $HERE/$PKG"
 ls -l "$PKG"
