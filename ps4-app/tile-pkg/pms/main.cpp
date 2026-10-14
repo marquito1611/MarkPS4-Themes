@@ -4,7 +4,7 @@
 #include <string.h>
 #include <orbis/Pad.h>
 #include <orbis/UserService.h>
-#include "../../_common/graphics.h"
+#include "graphics.h"
 
 #define W 1920
 #define H 1080
