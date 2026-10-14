@@ -27,9 +27,22 @@ typedef struct {
 typedef int32_t (*BgftInitFn)(BgftInitParams *);
 typedef int32_t (*BgftRegisterFn)(BgftDownloadParam *, BgftTaskId *);
 typedef int32_t (*BgftStartFn)(BgftTaskId);
+typedef int32_t (*BgftStopFn)(BgftTaskId);
+typedef int32_t (*BgftUnregisterFn)(BgftTaskId);
+typedef struct {
+    uint32_t bits; int32_t errorResult; uint32_t length; uint32_t transferred;
+    uint32_t lengthTotal; uint32_t transferredTotal; uint32_t numIndex; uint32_t numTotal;
+    uint32_t restSec; uint32_t restSecTotal; int32_t preparingPercent; int32_t localCopyPercent;
+} BgftTaskProgress;
+typedef int32_t (*BgftProgressFn)(BgftTaskId, BgftTaskProgress *);
 static BgftInitFn bgftInit = NULL;
 static BgftRegisterFn bgftRegister = NULL;
 static BgftStartFn bgftStart = NULL;
+static BgftStopFn bgftStop = NULL;
+static BgftUnregisterFn bgftUnregister = NULL;
+static BgftProgressFn bgftProgress = NULL;
+static BgftTaskId lastTask = -1;
+static int lastPackageIndex = -1;
 static void *bgftLib = NULL;
 static void *bgftHeap = NULL;
 static int bgftReady = 0;
@@ -64,6 +77,9 @@ static int startPackageInstall(int userId, int index) {
             bgftInit = (BgftInitFn)dlsym(bgftLib, "sceBgftServiceIntInit");
             bgftRegister = (BgftRegisterFn)dlsym(bgftLib, "sceBgftServiceIntDebugDownloadRegisterPkg");
             bgftStart = (BgftStartFn)dlsym(bgftLib, "sceBgftServiceIntDownloadStartTask");
+            bgftStop = (BgftStopFn)dlsym(bgftLib, "sceBgftServiceIntDownloadStopTask");
+            bgftUnregister = (BgftUnregisterFn)dlsym(bgftLib, "sceBgftServiceIntDownloadUnregisterTask");
+            bgftProgress = (BgftProgressFn)dlsym(bgftLib, "sceBgftServiceIntDownloadGetProgress");
         }
         if (!bgftInit || !bgftRegister || !bgftStart) {
             snprintf(installStatus, sizeof(installStatus), "BGFT NO ACCESIBLE DESDE ESTA APP");
@@ -83,6 +99,23 @@ static int startPackageInstall(int userId, int index) {
             return rc;
         }
         bgftReady = 1;
+    }
+
+    /* The two Assassin's Creed packages share one content ID. Never replace a task while it is
+       still transferring; after the user confirms the first install finished, release its BGFT
+       ticket so the second package can be registered for the same title. */
+    if (lastTask >= 0 && lastPackageIndex != index) {
+        BgftTaskProgress progress;
+        memset(&progress, 0, sizeof(progress));
+        if (!bgftProgress || bgftProgress(lastTask, &progress) != 0 ||
+            progress.lengthTotal == 0 || progress.transferredTotal < progress.lengthTotal) {
+            snprintf(installStatus, sizeof(installStatus), "ESPERA A QUE TERMINE EL PAQUETE ANTERIOR");
+            return -4;
+        }
+        if (bgftStop) (void)bgftStop(lastTask);
+        if (bgftUnregister) (void)bgftUnregister(lastTask);
+        lastTask = -1;
+        lastPackageIndex = -1;
     }
 
     BgftDownloadParam p;
@@ -109,6 +142,8 @@ static int startPackageInstall(int userId, int index) {
         snprintf(installStatus, sizeof(installStatus), "NO SE PUDO INICIAR DESCARGA");
         return rc;
     }
+    lastTask = task;
+    lastPackageIndex = index;
     snprintf(installStatus, sizeof(installStatus), "ENVIADO A DESCARGAS DEL PS4");
     return 0;
 }
