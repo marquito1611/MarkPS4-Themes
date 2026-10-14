@@ -4,13 +4,107 @@
 #include <string.h>
 #include <orbis/Pad.h>
 #include <orbis/UserService.h>
+#include <dlfcn.h>
 #include "graphics.h"
+#include "theme_packages.h"
 
 #define W 1920
 #define H 1080
 
 std::stringstream debugLogStream;
 static int frameID = 0;
+
+typedef int32_t BgftTaskId;
+typedef struct { void *heap; size_t heapSize; } BgftInitParams;
+typedef struct {
+    int32_t userId, entitlementType;
+    const char *id, *contentUrl, *contentExUrl, *contentName, *iconPath, *skuId;
+    int32_t option;
+    const char *playgoScenarioId, *releaseDate, *packageType, *packageSubType;
+    uint32_t packageSize;
+} BgftDownloadParam;
+typedef int32_t (*BgftInitFn)(BgftInitParams *);
+typedef int32_t (*BgftRegisterFn)(BgftDownloadParam *, BgftTaskId *);
+typedef int32_t (*BgftStartFn)(BgftTaskId);
+static BgftInitFn bgftInit = NULL;
+static BgftRegisterFn bgftRegister = NULL;
+static BgftStartFn bgftStart = NULL;
+static void *bgftLib = NULL;
+static void *bgftHeap = NULL;
+static int bgftReady = 0;
+static char installStatus[96] = "LISTO PARA INSTALAR";
+static int selectedPackage = 0;
+
+struct ThemePackage { const char *label; const char *url; const char *contentId; uint32_t size; };
+static ThemePackage packages[2] = {
+    {"PAQUETE 1", MARKPS4_PKG1_URL, MARKPS4_PKG1_CONTENT_ID, MARKPS4_PKG1_SIZE},
+    {"PAQUETE 2", MARKPS4_PKG2_URL, MARKPS4_PKG2_CONTENT_ID, MARKPS4_PKG2_SIZE}
+};
+
+static int startPackageInstall(int userId, int index) {
+    ThemePackage &pkg = packages[index];
+    if (!pkg.contentId[0] || pkg.size == 0) {
+        snprintf(installStatus, sizeof(installStatus), "METADATOS PKG NO DISPONIBLES");
+        return -1;
+    }
+    if (!bgftReady) {
+        const char *libs[] = {"/system/common/lib/libSceBgft.sprx", NULL};
+        for (int i=0; libs[i]; ++i) {
+            bgftLib = dlopen(libs[i], RTLD_LAZY | RTLD_GLOBAL);
+            if (bgftLib) break;
+        }
+        if (bgftLib) {
+            bgftInit = (BgftInitFn)dlsym(bgftLib, "sceBgftServiceIntInit");
+            bgftRegister = (BgftRegisterFn)dlsym(bgftLib, "sceBgftServiceIntDebugDownloadRegisterPkg");
+            bgftStart = (BgftStartFn)dlsym(bgftLib, "sceBgftServiceIntDownloadStartTask");
+        }
+        if (!bgftInit || !bgftRegister || !bgftStart) {
+            snprintf(installStatus, sizeof(installStatus), "BGFT NO ACCESIBLE DESDE ESTA APP");
+            return -2;
+        }
+        bgftHeap = malloc(1024 * 1024);
+        if (!bgftHeap) {
+            snprintf(installStatus, sizeof(installStatus), "SIN MEMORIA PARA INSTALADOR");
+            return -3;
+        }
+        memset(bgftHeap, 0, 1024 * 1024);
+        BgftInitParams init = { bgftHeap, 1024 * 1024 };
+        int rc = bgftInit(&init);
+        /* BGFT can already be initialized by the system or another trusted component. */
+        if (rc != 0 && (uint32_t)rc != 0x80990001u) {
+            snprintf(installStatus, sizeof(installStatus), "BGFT NO INICIO");
+            return rc;
+        }
+        bgftReady = 1;
+    }
+
+    BgftDownloadParam p;
+    memset(&p, 0, sizeof(p));
+    p.userId = userId;
+    p.entitlementType = 5;
+    p.id = pkg.contentId;
+    p.contentUrl = pkg.url;
+    p.contentName = index == 0 ? "MARKPS4 THEMES AC PAQUETE 1" : "MARKPS4 THEMES AC PAQUETE 2";
+    p.iconPath = "";
+    p.playgoScenarioId = "0";
+    p.option = 0x10000; /* Disable CDN query parameters for a non-Store PKG. */
+    p.packageType = "PS4GD";
+    p.packageSubType = "";
+    p.packageSize = pkg.size;
+    BgftTaskId task = -1;
+    int rc = bgftRegister(&p, &task);
+    if (rc != 0) {
+        snprintf(installStatus, sizeof(installStatus), "PS4 RECHAZO EL PAQUETE");
+        return rc;
+    }
+    rc = bgftStart(task);
+    if (rc != 0) {
+        snprintf(installStatus, sizeof(installStatus), "NO SE PUDO INICIAR DESCARGA");
+        return rc;
+    }
+    snprintf(installStatus, sizeof(installStatus), "ENVIADO A DESCARGAS DEL PS4");
+    return 0;
+}
 
 static const Color BG       = { 12, 14, 20 };
 static const Color PANEL    = { 25, 29, 39 };
@@ -91,8 +185,7 @@ static void render(Scene2D *s, int selected, int page) {
     s->FrameBufferFill(BG);
     panel(s,0,0,W,12,YELLOW);
     text(s,"MARKPS4 THEMES",92,66,7,WHITE);
-    text(s,"TEMAS PARA PS4",96,132,3,MUTED);
-
+    text(s,"TIENDA NATIVA PARA PS4",96,132,3,MUTED);
     panel(s,70,215,1780,2,PANEL2);
     const char *tabs[]={"CATALOGO","INSTALADOS","AJUSTES"};
     for (int i=0;i<3;i++) {
@@ -100,44 +193,37 @@ static void render(Scene2D *s, int selected, int page) {
         panel(s,x,185,245,66,(page==i)?YELLOW:PANEL);
         text(s,tabs[i],x+20,207,3,(page==i)?BLACK:WHITE);
     }
-
     if (page==0) {
-        text(s,"CATALOGO DE TEMAS",95,300,5,WHITE);
-        text(s,"ELIGE UN DISENO PARA TU PS4",98,355,3,MUTED);
-        const char *names[]={"DARK CARBON","NEON GOLD","MIDNIGHT BLUE","CLASSIC BLACK"};
-        const char *sub[]={"INTERFAZ OSCURA","ACENTO AMARILLO","ESTILO NOCTURNO","MINIMALISTA"};
-        Color accents[]={{95,105,125},{255,210,45},{70,145,255},{180,185,195}};
-        for (int i=0;i<4;i++) {
-            int x=95+i*445;
-            panel(s,x,440,405,385,(selected==i)?YELLOW:PANEL2);
-            panel(s,x+12,452,381,210,BG);
-            panel(s,x+32,472,341,15,accents[i]);
-            panel(s,x+32,507,165,108,PANEL);
-            panel(s,x+211,507,162,48,PANEL);
-            panel(s,x+211,569,162,46,PANEL);
-            panel(s,x+32,632,341,3,accents[i]);
-            text(s,names[i],x+24,690,3,(selected==i)?YELLOW:WHITE);
-            text(s,sub[i],x+24,738,2,MUTED);
-            if (selected==i) {
-                panel(s,x+24,778,180,30,YELLOW);
-                text(s,"SELECCIONADO",x+34,785,2,BLACK);
-            }
+        text(s,"ASSASSIN'S CREED",95,300,6,WHITE);
+        text(s,"PAQUETES OFICIALES DE TU REPOSITORIO MARKPS4",98,365,3,MUTED);
+        panel(s,95,430,1730,170,PANEL2);
+        panel(s,115,450,12,130,YELLOW);
+        text(s,"INSTALA LOS DOS PAQUETES EN ORDEN",155,465,4,WHITE);
+        text(s,"SELECCIONA UN PAQUETE Y PULSA X PARA ENVIARLO A DESCARGAS",155,525,2,MUTED);
+        for (int i=0;i<2;i++) {
+            int y=640+i*130;
+            panel(s,95,y,1730,105,(selectedPackage==i)?YELLOW:PANEL);
+            Color tc=(selectedPackage==i)?BLACK:WHITE;
+            text(s,i==0?"PAQUETE 1":"PAQUETE 2",130,y+24,4,tc);
+            text(s,i==0?"1-EP0001-CUSA09303...V0100.PKG":"2-EP0001-CUSA09303...PKG",500,y+28,2,tc);
+            text(s,"PULSA X PARA INSTALAR",1390,y+35,2,tc);
         }
-        text(s,"CRUCETA: MOVER   L1/R1: SECCIONES   X: SELECCIONAR",98,900,2,MUTED);
-        text(s,"VISTA DE DISENO: LOS TEMAS SE MOSTRARAN AL CONECTAR EL CATALOGO REAL",98,950,2,MUTED);
+        text(s,"ESTADO:",98,930,2,MUTED);
+        text(s,installStatus,270,930,2,YELLOW);
+        text(s,"D-PAD: ELEGIR PAQUETE   X: INICIAR   L1/R1: SECCIONES",98,985,2,MUTED);
     } else if (page==1) {
         text(s,"TEMAS INSTALADOS",95,310,5,WHITE);
-        text(s,"AQUI APARECERAN LOS TEMAS DETECTADOS EN LA CONSOLA",98,390,3,MUTED);
+        text(s,"EL SISTEMA PS4 GESTIONA LAS INSTALACIONES Y SUS NOTIFICACIONES",98,390,3,MUTED);
         panel(s,95,470,1730,220,PANEL);
-        text(s,"SIN DATOS DE TEMAS INSTALADOS",135,545,4,WHITE);
+        text(s,"REVISA NOTIFICACIONES Y DESCARGAS DEL PS4",135,545,4,WHITE);
     } else {
         text(s,"AJUSTES",95,310,5,WHITE);
         panel(s,95,400,1730,110,PANEL);
         text(s,"MARKPS4 THEMES - INTERFAZ NATIVA",130,440,3,WHITE);
         panel(s,95,535,1730,110,PANEL);
-        text(s,"NAVEGACION CON MANDO DUALSHOCK 4",130,575,3,WHITE);
+        text(s,"SIN NAVEGADOR PARA MOSTRAR LA INTERFAZ",130,575,3,WHITE);
         panel(s,95,670,1730,110,PANEL);
-        text(s,"SIN NAVEGADOR NI BINLOADER PARA DIBUJAR ESTA PANTALLA",130,710,3,WHITE);
+        text(s,"LA INSTALACION USA BGFT SI EL FIRMWARE DA ACCESO",130,710,3,WHITE);
     }
     s->SubmitFlip(frameID);
     s->FrameWait(frameID);
@@ -174,14 +260,14 @@ int main() {
             if (scePadReadState(pad, &data) == 0) {
                 uint32_t now = data.buttons;
                 uint32_t pressed = now & ~previous;
-                if (pressed & ORBIS_PAD_BUTTON_LEFT) selected = (selected + 3) % 4;
-                if (pressed & ORBIS_PAD_BUTTON_RIGHT) selected = (selected + 1) % 4;
-                if (pressed & ORBIS_PAD_BUTTON_UP) selected = (selected + 3) % 4;
-                if (pressed & ORBIS_PAD_BUTTON_DOWN) selected = (selected + 1) % 4;
+                if (pressed & ORBIS_PAD_BUTTON_LEFT) selectedPackage = (selectedPackage + 1) % 2;
+                if (pressed & ORBIS_PAD_BUTTON_RIGHT) selectedPackage = (selectedPackage + 1) % 2;
+                if (pressed & ORBIS_PAD_BUTTON_UP) selectedPackage = (selectedPackage + 1) % 2;
+                if (pressed & ORBIS_PAD_BUTTON_DOWN) selectedPackage = (selectedPackage + 1) % 2;
                 if (pressed & ORBIS_PAD_BUTTON_L1) page = (page + 2) % 3;
                 if (pressed & ORBIS_PAD_BUTTON_R1) page = (page + 1) % 3;
                 if (pressed & ORBIS_PAD_BUTTON_CROSS) {
-                    /* Selection is visual only until a real theme-package catalog is connected. */
+                    startPackageInstall(userID, selectedPackage);
                 }
                 if (pressed & ORBIS_PAD_BUTTON_CIRCLE) page = 0;
                 previous = now;
