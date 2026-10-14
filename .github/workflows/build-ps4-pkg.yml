@@ -68,7 +68,7 @@ jobs:
           lines = []
           for i in range(0, len(raw), 24):
               lines.append("    " + ", ".join(str(v) for v in raw[i:i+24]) + ",")
-          header = "#pragma once\\n#include <stdint.h>\\nstatic const uint8_t kAssassinsCreedRGB[] = {\\n" + "\\n".join(lines) + "\\n};\\n"
+          header = "#pragma once\n#include <stdint.h>\nstatic const uint8_t kAssassinsCreedRGB[] = {\n" + "\n".join(lines) + "\n};\n"
           Path("ps4-app/tile-pkg/pms/assassins_creed_image.h").write_text(header)
           PY
           COMMONDIR="$HOME/ps4tool/OpenOrbis/OpenOrbis/PS4Toolchain/samples/_common"
@@ -81,10 +81,10 @@ jobs:
           if "DrawRGBImage(" not in header:
               if declaration not in header:
                   raise SystemExit("Could not find Scene2D DrawRectangle declaration")
-              header = header.replace(declaration, declaration + "\\n\\tvoid DrawRGBImage(int x, int y, int w, int h, const uint8_t *rgb, int imageW, int imageH);")
+              header = header.replace(declaration, declaration + "\n\\tvoid DrawRGBImage(int x, int y, int w, int h, const uint8_t *rgb, int imageW, int imageH);")
               header_path.write_text(header)
           source = source_path.read_text()
-          marker = "#ifdef GRAPHICS_USES_FONT\\nvoid Scene2D::DrawText"
+          marker = "#ifdef GRAPHICS_USES_FONT\nvoid Scene2D::DrawText"
           method = """void Scene2D::DrawRGBImage(int x, int y, int w, int h, const uint8_t *rgb, int imageW, int imageH)
           {
               if (!rgb || w <= 0 || h <= 0 || imageW <= 0 || imageH <= 0) return;
