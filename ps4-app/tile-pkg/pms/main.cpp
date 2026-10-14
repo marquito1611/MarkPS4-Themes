@@ -81,7 +81,7 @@ static int startPackageInstall(int userId, int index) {
             bgftUnregister = (BgftUnregisterFn)dlsym(bgftLib, "sceBgftServiceIntDownloadUnregisterTask");
             bgftProgress = (BgftProgressFn)dlsym(bgftLib, "sceBgftServiceIntDownloadGetProgress");
         }
-        if (!bgftInit || !bgftRegister || !bgftStart) {
+        if (!bgftInit || !bgftRegister || !bgftStart || !bgftProgress || !bgftStop || !bgftUnregister) {
             snprintf(installStatus, sizeof(installStatus), "BGFT NO ACCESIBLE DESDE ESTA APP");
             return -2;
         }
@@ -107,13 +107,16 @@ static int startPackageInstall(int userId, int index) {
     if (lastTask >= 0 && lastPackageIndex != index) {
         BgftTaskProgress progress;
         memset(&progress, 0, sizeof(progress));
-        if (!bgftProgress || bgftProgress(lastTask, &progress) != 0 ||
-            progress.lengthTotal == 0 || progress.transferredTotal < progress.lengthTotal) {
+        int progressRc = bgftProgress(lastTask, &progress);
+        if (progressRc == 0 && progress.lengthTotal > 0 &&
+            progress.transferredTotal < progress.lengthTotal) {
             snprintf(installStatus, sizeof(installStatus), "ESPERA A QUE TERMINE EL PAQUETE ANTERIOR");
             return -4;
         }
-        if (bgftStop) (void)bgftStop(lastTask);
-        if (bgftUnregister) (void)bgftUnregister(lastTask);
+        /* Only reach here when the previous transfer reports all bytes or BGFT no longer reports it.
+           The owner should press X for package 2 only after the PS4 confirms package 1 installed. */
+        (void)bgftStop(lastTask);
+        (void)bgftUnregister(lastTask);
         lastTask = -1;
         lastPackageIndex = -1;
     }
@@ -241,6 +244,7 @@ static void render(Scene2D *s, int selected, int page) {
         panel(s,95,430,1730,170,PANEL2);
         panel(s,115,450,12,130,YELLOW);
         text(s,"INSTALA LOS DOS PAQUETES EN ORDEN",155,465,4,WHITE);
+        text(s,"ESPERA EL AVISO DE INSTALACION COMPLETA ANTES DEL PAQUETE 2",155,490,2,MUTED);
         text(s,"SELECCIONA UN PAQUETE Y PULSA X PARA ENVIARLO A DESCARGAS",155,525,2,MUTED);
         for (int i=0;i<2;i++) {
             int y=640+i*130;
