@@ -337,9 +337,10 @@ static int jailbreak_is_loaded(void) {
    than a port scan. That is also why there is no "is a loader there?" probe: the connect below IS
    the probe and it is always followed by the payload. */
 #define PAYLOAD_PATH "/app0/pms-payload.elf"
-#define LOADER_HTTP  9090
+/* GoldHEN README documents BinLoader on TCP 9090; it expects a raw ELF stream. */
+#define LOADER_GOLDHEN_RAW 9090
 #define LOADER_RAW   9021
-/* 9020 is the classic raw PS4 payload receiver port used by several payload loaders. */
+/* 9020 is another raw PS4 payload receiver port used by some payload loaders. */
 #define LOADER_RAW_ALT 9020
 
 static int write_all(int fd, const char *buf, size_t len) {
@@ -352,7 +353,7 @@ static int write_all(int fd, const char *buf, size_t len) {
     return 0;
 }
 
-static int send_payload(int port, int http) {
+static int send_payload(int port) {
     struct stat st;
     if (stat(PAYLOAD_PATH, &st) != 0 || st.st_size <= 0) return -1;
     int f = open(PAYLOAD_PATH, O_RDONLY);
@@ -372,15 +373,6 @@ static int send_payload(int port, int http) {
     a.sin_addr.s_addr = inet_addr("127.0.0.1");
     if (connect(s, (struct sockaddr *)&a, sizeof(a)) != 0) { close(s); close(f); return -1; }
 
-    if (http) {
-        char hdr[256];
-        int hn = snprintf(hdr, sizeof(hdr),
-                          "POST / HTTP/1.1\r\nHost: 127.0.0.1:%d\r\n"
-                          "Content-Type: application/octet-stream\r\n"
-                          "Content-Length: %lld\r\nConnection: close\r\n\r\n",
-                          port, (long long)st.st_size);
-        if (write_all(s, hdr, (size_t)hn) != 0) { close(s); close(f); return -1; }
-    }
     char *buf = (char *)malloc(64 * 1024);
     if (!buf) { close(s); close(f); return -1; }
     int bad = 0;
@@ -470,27 +462,25 @@ int main(void) {
      * is not sent the same payload twice.
      */
     int sent_any = 0;
-    int http_sent = 0, raw_sent = 0, raw_alt_sent = 0;
+    int goldhen_sent = 0, raw_sent = 0, raw_alt_sent = 0;
     for (int round = 0; round < 2 && !shop_is_up(); round++) {
         if (round) sceKernelUsleep(2 * 1000000);
 
         for (int which = 0; which < 3 && !shop_is_up(); which++) {
-            int port = which == 0 ? LOADER_HTTP :
+            int port = which == 0 ? LOADER_GOLDHEN_RAW :
                        (which == 1 ? LOADER_RAW : LOADER_RAW_ALT);
-            int is_http = which == 0;
-            if ((which == 0 && http_sent) ||
+            if ((which == 0 && goldhen_sent) ||
                 (which == 1 && raw_sent) ||
                 (which == 2 && raw_alt_sent)) continue;
 
-            printf("[PMS] trying payload loader :%d (%s)\n",
-                   port, is_http ? "HTTP" : "raw ELF");
-            if (send_payload(port, is_http) != 0) {
+            printf("[PMS] trying payload loader :%d (raw ELF)\n", port);
+            if (send_payload(port) != 0) {
                 printf("[PMS] loader :%d did not accept a complete transfer\n", port);
                 continue;
             }
 
             sent_any = 1;
-            if (which == 0) http_sent = 1;
+            if (which == 0) goldhen_sent = 1;
             else if (which == 1) raw_sent = 1;
             else raw_alt_sent = 1;
 
@@ -532,8 +522,8 @@ int main(void) {
            jb ? "IS loaded (its payload loader is not)" : "is NOT loaded");
     if (jb)
         notify("MarkPS4 Themes cannot start\n"
-               "Jailbreak detected, but no payload loader answered on ports 9090 or 9021. "
-               "Restart the jailbreak payload loader, then open this again.");
+               "Jailbreak detected, but no payload loader answered on ports 9090, 9021 or 9020. "
+               "Start GoldHEN's BinLoader on TCP 9090, then open this again.");
     else
         notify("MarkPS4 Themes cannot start\n"
                "No payload loader (9090, 9021, 9020) or known FTP service answered. This does NOT prove the jailbreak "
