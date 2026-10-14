@@ -22,7 +22,7 @@ static const Color BLACK    = { 12, 14, 20 };
 
 static const uint8_t *glyph(char c) {
     static const uint8_t blank[7] = {0,0,0,0,0,0,0};
-    #define G(a,b,c,d,e,f,g) static const uint8_t x[7]={a,b,c,d,e,f,g}; return x
+    #define G(a,b,c,d,e,f,g) { static const uint8_t x[7]={a,b,c,d,e,f,g}; return x; }
     switch (c) {
         case 'A': G(14,17,17,31,17,17,17);
         case 'B': G(30,17,17,30,17,17,30);
@@ -88,6 +88,7 @@ static void panel(Scene2D *s, int x, int y, int w, int h, Color c) {
 
 static void render(Scene2D *s, int selected, int page) {
     s->FrameBufferClear();
+    s->FrameBufferFill(BG);
     panel(s,0,0,W,12,YELLOW);
     text(s,"MARKPS4 THEMES",92,66,7,WHITE);
     text(s,"TEMAS PARA PS4",96,132,3,MUTED);
