@@ -52,11 +52,8 @@ for f in sce_sys/about/right.sprx sce_module/libSceFios2.prx sce_module/libc.prx
   [ -f "$f" ] || cp "$OO_PS4_TOOLCHAIN/samples/hello_world/$f" "$f"
 done
 
-# THE PAYLOAD THIS PACKAGE CARRIES is the LITE one - the same shop with no package inside it. That
-# is what lets the icon start the shop without creating a cycle: this package carries lite, and the
-# full payload carries this package. Build order is lite -> package -> full, which is what
-# ps4-app/build-all-wsl.sh does. Handing this the FULL payload would put a package inside a package.
-# Native app build: no external ELF is copied into the application.
+# This package contains its own native renderer and controller loop. It does not need a
+# separately launched process to draw the interface.
 
 if [ ! -f sce_sys/icon0.png ]; then
   echo "ABORT: sce_sys/icon0.png is missing - the console needs an icon for the tile." >&2
