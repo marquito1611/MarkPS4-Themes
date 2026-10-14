@@ -56,12 +56,7 @@ done
 # is what lets the icon start the shop without creating a cycle: this package carries lite, and the
 # full payload carries this package. Build order is lite -> package -> full, which is what
 # ps4-app/build-all-wsl.sh does. Handing this the FULL payload would put a package inside a package.
-PAYLOAD="$HERE/../onconsole/MARKPS4-THEMES-PS4-LITE.elf"
-if [ ! -f "$PAYLOAD" ]; then
-  echo "ABORT: the lite payload is not built - run ps4-app/build-all-wsl.sh." >&2
-  exit 1
-fi
-cp "$PAYLOAD" pms-payload.elf
+# Native app build: no external ELF is copied into the application.
 
 if [ ! -f sce_sys/icon0.png ]; then
   echo "ABORT: sce_sys/icon0.png is missing - the console needs an icon for the tile." >&2
