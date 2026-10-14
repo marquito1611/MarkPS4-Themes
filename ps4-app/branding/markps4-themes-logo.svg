@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="420" viewBox="0 0 1200 420">
+<defs><linearGradient id="blue" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#5cf7ff"/><stop offset=".48" stop-color="#168cff"/><stop offset="1" stop-color="#6548ff"/></linearGradient><linearGradient id="silver" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#fff"/><stop offset="1" stop-color="#9eb8d9"/></linearGradient><filter id="glow"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+<rect width="1200" height="420" rx="32" fill="#070b14"/><path d="M24 320 L180 164 M1020 256 L1176 100 M24 352 H1176" fill="none" stroke="#12335b" stroke-width="2"/>
+<path d="M62 88 H1138 M62 96 H370 M830 96 H1138" stroke="#1b8dff" stroke-width="2" opacity=".6"/>
+<g transform="translate(68 128)" filter="url(#glow)"><path d="M0 24 L62 0 L130 24 L130 116 L65 145 L0 116 Z" fill="none" stroke="url(#blue)" stroke-width="7"/><path d="M28 54 L54 54 L54 82 L80 82 L80 54 L103 54" fill="none" stroke="#f5fbff" stroke-width="10" stroke-linejoin="round"/><circle cx="65" cy="108" r="5" fill="#55f3ff"/></g>
+<text x="232" y="222" font-family="Arial, Helvetica, sans-serif" font-size="112" font-weight="900" letter-spacing="-5" fill="url(#silver)">MarkPS4</text>
+<path d="M235 244 H1072" stroke="url(#blue)" stroke-width="5" filter="url(#glow)"/>
+<text x="238" y="318" font-family="Arial, Helvetica, sans-serif" font-size="62" font-weight="800" letter-spacing="14" fill="url(#blue)">THEMES</text>
+<text x="240" y="356" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="700" letter-spacing="6" fill="#8ca6c8">CUSTOMIZE YOUR PLAYSTATION</text>
+<g fill="#55f3ff"><circle cx="1092" cy="300" r="7"/><circle cx="1118" cy="300" r="7"/><circle cx="1092" cy="326" r="7"/><circle cx="1118" cy="326" r="7"/></g>
+</svg>
