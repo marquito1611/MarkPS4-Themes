@@ -230,8 +230,21 @@ static Color shade(Color c, int d) {
 /* Clean flat geometry: one surface per component, no stacked rectangles,
    fake depth, borders or glossy strips. */
 static void roundPanel(Scene2D *s, int x, int y, int w, int h, int r, Color c) {
-    (void)r;
-    if (w > 0 && h > 0) panel(s, x, y, w, h, c);
+    if (w < 2 || h < 2) return;
+    if (r < 1) { panel(s,x,y,w,h,c); return; }
+    if (r > h/2) r = h/2;
+    if (r > w/2) r = w/2;
+    for (int yy=0; yy<h; ++yy) {
+        int inset=0;
+        if (yy<r) {
+            int dy=r-yy;
+            inset=r-(int)sqrt((double)(r*r-dy*dy));
+        } else if (yy>=h-r) {
+            int dy=yy-(h-r-1);
+            inset=r-(int)sqrt((double)(r*r-dy*dy));
+        }
+        if (w-2*inset>0) panel(s,x+inset,y+yy,w-2*inset,1,c);
+    }
 }
 static void liftedPanel(Scene2D *s, int x, int y, int w, int h, Color c, bool active) {
     if (w <= 0 || h <= 0) return;
