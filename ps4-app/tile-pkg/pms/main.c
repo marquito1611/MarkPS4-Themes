@@ -339,6 +339,8 @@ static int jailbreak_is_loaded(void) {
 #define PAYLOAD_PATH "/app0/pms-payload.elf"
 #define LOADER_HTTP  9090
 #define LOADER_RAW   9021
+/* 9020 is the classic raw PS4 payload receiver port used by several payload loaders. */
+#define LOADER_RAW_ALT 9020
 
 static int write_all(int fd, const char *buf, size_t len) {
     size_t off = 0;
@@ -468,14 +470,17 @@ int main(void) {
      * is not sent the same payload twice.
      */
     int sent_any = 0;
-    int http_sent = 0, raw_sent = 0;
+    int http_sent = 0, raw_sent = 0, raw_alt_sent = 0;
     for (int round = 0; round < 2 && !shop_is_up(); round++) {
         if (round) sceKernelUsleep(2 * 1000000);
 
-        for (int which = 0; which < 2 && !shop_is_up(); which++) {
-            int port = which == 0 ? LOADER_HTTP : LOADER_RAW;
+        for (int which = 0; which < 3 && !shop_is_up(); which++) {
+            int port = which == 0 ? LOADER_HTTP :
+                       (which == 1 ? LOADER_RAW : LOADER_RAW_ALT);
             int is_http = which == 0;
-            if ((is_http && http_sent) || (!is_http && raw_sent)) continue;
+            if ((which == 0 && http_sent) ||
+                (which == 1 && raw_sent) ||
+                (which == 2 && raw_alt_sent)) continue;
 
             printf("[PMS] trying payload loader :%d (%s)\n",
                    port, is_http ? "HTTP" : "raw ELF");
@@ -485,8 +490,9 @@ int main(void) {
             }
 
             sent_any = 1;
-            if (is_http) http_sent = 1;
-            else raw_sent = 1;
+            if (which == 0) http_sent = 1;
+            else if (which == 1) raw_sent = 1;
+            else raw_alt_sent = 1;
 
             notify("Payload sent; waiting for the shop");
             /* A successful transfer is not a successful launch. Verify the actual service. */
@@ -530,7 +536,7 @@ int main(void) {
                "Restart the jailbreak payload loader, then open this again.");
     else
         notify("MarkPS4 Themes cannot start\n"
-               "No payload loader or known FTP service answered. This does NOT prove the jailbreak "
+               "No payload loader (9090, 9021, 9020) or known FTP service answered. This does NOT prove the jailbreak "
                "is inactive; check that the jailbreak's BinLoader/payload loader is running, "
                "then open MarkPS4 Themes again.");
     sceKernelUsleep(8 * 1000000);
