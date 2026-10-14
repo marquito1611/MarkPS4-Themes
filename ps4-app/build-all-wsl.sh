@@ -4,9 +4,9 @@
 # There are three artefacts and they depend on each other in a line, not a circle:
 #
 #   0. pms-agent.prx                  the in-game agent, embedded by BOTH payloads
-#   1. PKG-MUTANT-SHOP-PS4-LITE.elf   the shop, with no package inside it
+#   1. MARKPS4-THEMES-PS4-LITE.elf   the shop, with no package inside it
 #   2. IV0000-PKGM00001_00-...pkg     the home-screen app, carrying (1)
-#   3. PKG-MUTANT-SHOP-PS4.elf        the shop, carrying (2)
+#   3. MARKPS4-THEMES-PS4.elf        the shop, carrying (2)
 #
 # WHY IT IS SHAPED LIKE THAT. The user asked for two things that pull against each other: the ELF
 # must carry the home-screen app and install it (as the PS5 ELF does with its tile), AND pressing
@@ -45,6 +45,6 @@ bash "$HERE/onconsole/build-wsl.sh"
 
 echo
 echo "======== done"
-ls -l "$HERE/onconsole/PKG-MUTANT-SHOP-PS4-LITE.elf" \
-      "$HERE/tile-pkg/IV0000-PKGM00001_00-PKGMUTANTSHOP001.pkg" \
-      "$HERE/onconsole/PKG-MUTANT-SHOP-PS4.elf"
+ls -l "$HERE/onconsole/MARKPS4-THEMES-PS4-LITE.elf" \
+      "$HERE/tile-pkg/IV0000-PKGM00001_00-MARKPS4THEMES001.pkg" \
+      "$HERE/onconsole/MARKPS4-THEMES-PS4.elf"
