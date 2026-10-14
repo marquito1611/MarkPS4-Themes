@@ -4,7 +4,6 @@
 #include <string.h>
 #include <orbis/Pad.h>
 #include <orbis/UserService.h>
-#include <orbis/Kernel.h>
 #include <stdlib.h>
 #include <dlfcn.h>
 #include "graphics.h"
@@ -50,8 +49,12 @@ static int startPackageInstall(int userId, int index) {
         return -1;
     }
     if (!bgftReady) {
-        int moduleResult = 0;
-        (void)sceKernelLoadStartModule("/system/common/lib/libSceBgft.sprx", 0, NULL, 0, NULL, &moduleResult);
+        typedef int (*LoadModuleFn)(const char *, size_t, const void *, uint32_t, void *, int *);
+        LoadModuleFn loadModule = (LoadModuleFn)dlsym(RTLD_DEFAULT, "sceKernelLoadStartModule");
+        if (loadModule) {
+            int moduleResult = 0;
+            (void)loadModule("/system/common/lib/libSceBgft.sprx", 0, NULL, 0, NULL, &moduleResult);
+        }
         const char *libs[] = {"/system/common/lib/libSceBgft.sprx", NULL};
         for (int i=0; libs[i]; ++i) {
             bgftLib = dlopen(libs[i], RTLD_LAZY | RTLD_GLOBAL);
