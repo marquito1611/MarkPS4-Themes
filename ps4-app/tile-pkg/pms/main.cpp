@@ -259,97 +259,153 @@ static void text(Scene2D *s, const char *str, int x, int y, int scale, Color col
 static void panel(Scene2D *s, int x, int y, int w, int h, Color c) {
     s->DrawRectangle(x,y,w,h,c);
 }
-
+static Color shade(Color c, int d) {
+    Color o;
+    o.r = (uint8_t)(c.r > d ? c.r-d : 0);
+    o.g = (uint8_t)(c.g > d ? c.g-d : 0);
+    o.b = (uint8_t)(c.b > d ? c.b-d : 0);
+    return o;
+}
+/* Rounded-look panels are rasterized from horizontal slices so no external graphics
+   dependency is required. Soft layered shadows provide a restrained 3D lift. */
+static void roundPanel(Scene2D *s, int x, int y, int w, int h, int r, Color c) {
+    if (w < 2 || h < 2) return;
+    if (r < 1) { panel(s,x,y,w,h,c); return; }
+    if (r > h/2) r = h/2;
+    if (r > w/2) r = w/2;
+    for (int yy=0; yy<h; ++yy) {
+        int inset=0;
+        if (yy<r) {
+            int dy=r-yy;
+            inset=r-(int)sqrt((double)(r*r-dy*dy));
+        } else if (yy>=h-r) {
+            int dy=yy-(h-r-1);
+            inset=r-(int)sqrt((double)(r*r-dy*dy));
+        }
+        if (w-2*inset>0) panel(s,x+inset,y+yy,w-2*inset,1,c);
+    }
+}
+static void liftedPanel(Scene2D *s, int x, int y, int w, int h, Color c, bool active) {
+    roundPanel(s,x+2,y+9,w,h,18,{2,4,9});
+    roundPanel(s,x,y+4,w,h,18,{7,12,21});
+    roundPanel(s,x,y,w,h,18,c);
+    roundPanel(s,x+2,y+2,w-4,2,8,active?BLUE:PANEL2);
+    if (active) {
+        roundPanel(s,x+5,y+7,4,h-14,2,BLUE);
+        roundPanel(s,x+w-9,y+12,3,h-24,1,{0,91,151});
+    }
+}
 static void render(Scene2D *s, int selected, int page) {
+    const int t=frameID;
+    const int pulse=(t/3)%28;
     (void)selected;
     s->FrameBufferClear();
     s->FrameBufferFill(BG);
 
-    // Sidebar fija: navegación por secciones a la izquierda.
-    panel(s,0,0,315,H,PANEL);
-    panel(s,314,0,2,H,{25,48,69});
-    panel(s,0,0,6,H,BLUE);
+    // Subtle animated ambient bands, kept inexpensive for the PS4.
+    for (int i=0;i<7;i++) {
+        int yy=(i*177 + (t/5)%177)%1080;
+        panel(s,315,yy,1605,1,{10,18,30});
+    }
+    panel(s,0,0,315,H,{11,17,28});
+    panel(s,0,0,5,H,BLUE);
+    panel(s,314,0,2,H,{26,50,72});
 
-    // Emblema MarkPS4 dibujado con las primitivas nativas.
-    panel(s,36,42,64,64,BG);
-    panel(s,36,42,64,4,BLUE);
-    panel(s,36,102,64,4,BLUE_DARK);
-    panel(s,36,42,4,64,BLUE);
-    panel(s,96,42,4,64,BLUE);
-    text(s,"M",51,60,4,WHITE);
-    text(s,"MarkPS4",115,49,3,WHITE);
-    text(s,"THEMES STORE",116,83,2,BLUE);
-    panel(s,35,135,245,2,PANEL2);
+    // Brand block with a dimensional emblem.
+    roundPanel(s,27,32,82,82,18,{0,4,12});
+    roundPanel(s,31,28,82,82,18,{11,29,47});
+    roundPanel(s,31,28,82,4,2,BLUE);
+    roundPanel(s,31,106,82,3,2,BLUE_DARK);
+    text(s,"M",52,52,5,WHITE);
+    text(s,"MarkPS4",125,42,3,WHITE);
+    text(s,"THEMES STORE",126,76,2,BLUE);
+    roundPanel(s,30,130,250,2,1,PANEL2);
 
-    panel(s,28,176,260,76,page==0?PANEL2:PANEL);
-    if (page==0) panel(s,28,176,5,76,BLUE);
-    text(s,"TEMAS",58,202,3,page==0?WHITE:MUTED);
+    // Navigation cards.
+    liftedPanel(s,24,158,266,72,PANEL2,page==0);
+    text(s,"01",42,184,2,page==0?BLUE:MUTED);
+    text(s,"TEMAS",82,183,3,page==0?WHITE:MUTED);
+    liftedPanel(s,24,249,266,72,PANEL,page==1);
+    text(s,"02",42,275,2,page==1?BLUE:MUTED);
+    text(s,"INSTALADOS",82,274,2,page==1?WHITE:MUTED);
+    liftedPanel(s,24,340,266,72,PANEL,page==2);
+    text(s,"03",42,366,2,page==2?BLUE:MUTED);
+    text(s,"AJUSTES",82,365,3,page==2?WHITE:MUTED);
 
-    panel(s,28,270,260,76,page==1?PANEL2:PANEL);
-    if (page==1) panel(s,28,270,5,76,BLUE);
-    text(s,"INSTALADOS",58,296,3,page==1?WHITE:MUTED);
+    roundPanel(s,30,435,250,2,1,PANEL2);
+    text(s,"MARKPS4 THEMES",37,462,2,BLUE);
+    text(s,"EXPERIENCIA NATIVA",37,490,2,MUTED);
+    roundPanel(s,30,984,248,44,12,{17,27,42});
+    text(s,"L1 / R1  SECCIONES",47,1000,2,MUTED);
 
-    panel(s,35,385,245,2,PANEL2);
-    text(s,"MARKPS4 THEMES",40,414,2,BLUE);
-    text(s,"TIENDA NATIVA",40,446,2,MUTED);
-    text(s,"L1 / R1: SECCIONES",40,1000,2,MUTED);
-
-    // Cabecera del catálogo.
-    text(s,page==0?"CATALOGO DE TEMAS":"TEMAS INSTALADOS",370,58,5,WHITE);
-    text(s,page==0?"ELIGE UN TEMA PARA TU PS4":"REVISA TU COLECCION",372,112,2,MUTED);
-    panel(s,1570,55,270,48,PANEL2);
-    panel(s,1570,55,3,48,BLUE);
-    text(s,"MARKPS4  /  PS4",1590,74,2,BLUE);
-    panel(s,370,150,1470,2,PANEL2);
+    // Header with accent and status chip.
+    text(s,page==0?"CATALOGO DE TEMAS":(page==1?"TEMAS INSTALADOS":"AJUSTES"),360,49,4,WHITE);
+    text(s,page==0?"DESCUBRE TU PROXIMO TEMA":"GESTION Y PERSONALIZACION",362,91,2,MUTED);
+    liftedPanel(s,1518,43,326,52,{14,25,39},false);
+    roundPanel(s,1532,57,7,24,3,BLUE);
+    text(s,"MARKPS4  /  PS4",1554,62,2,WHITE);
+    roundPanel(s,360,125,1484,2,1,PANEL2);
 
     if (page==0) {
-        // Catalogo compacto de cuatro tarjetas por fila, preparado para crecer.
-        const int cardW=350, cardH=440, gap=22, cardY=190;
-        const int xs[4]={370,742,1114,1486};
+        const int cardW=350, cardH=470, cardY=153;
+        const int xs[4]={360,733,1106,1479};
         for (int i=0;i<4;i++) {
             int x=xs[i];
-            panel(s,x,cardY,cardW,cardH,PANEL);
-            panel(s,x,cardY,cardW,3,i==0?BLUE:PANEL2);
-            if (i==0) {
-                panel(s,x+18,cardY+18,cardW-36,165,BG);
-                s->DrawRGBImage(x+18,cardY+18,cardW-36,165,kAssassinsCreedRGB,240,165);
-                text(s,"ASSASSIN'S",x+20,cardY+205,3,WHITE);
-                text(s,"CREED",x+20,cardY+241,3,WHITE);
-                text(s,"TEMA COMPLETO",x+20,cardY+284,2,BLUE);
-                panel(s,x+18,cardY+318,cardW-36,58,BLUE);
-                text(s,"INSTALAR",x+105,cardY+339,3,BLACK);
-                text(s,"2 PKG INCLUIDOS",x+20,cardY+395,2,MUTED);
+            bool active=(i==0);
+            int bob=active ? (pulse<14 ? pulse/7 : (27-pulse)/7) : 0;
+            int y=cardY-bob;
+            liftedPanel(s,x,y,cardW,cardH,active?Color{17,31,48}:PANEL,active);
+            if (active) {
+                // Framed artwork with depth and a moving highlight.
+                roundPanel(s,x+17,y+17,cardW-34,184,13,{2,6,13});
+                roundPanel(s,x+21,y+21,cardW-42,176,10,{8,17,28});
+                s->DrawRGBImage(x+23,y+23,cardW-46,172,kAssassinsCreedRGB,240,165);
+                int shine=(t*5)%(cardW-70);
+                panel(s,x+25+shine,y+24,2,169,{38,74,100});
+                text(s,"ASSASSIN'S",x+24,y+225,3,WHITE);
+                text(s,"CREED",x+24,y+261,3,WHITE);
+                text(s,"TEMA COMPLETO",x+24,y+300,2,BLUE);
+                roundPanel(s,x+18,y+333,cardW-36,65,15,{0,48,78});
+                roundPanel(s,x+18,y+328,cardW-36,65,15,BLUE);
+                roundPanel(s,x+25,y+333,cardW-50,2,1,{103,226,255});
+                text(s,"INSTALAR",x+106,y+352,3,BLACK);
+                text(s,"2 PKG INCLUIDOS",x+24,y+420,2,MUTED);
+                roundPanel(s,x+cardW-112,y+426,88,24,8,{7,35,51});
+                text(s,"DISPONIBLE",x+cardW-105,y+434,1,BLUE);
             } else {
-                panel(s,x+18,cardY+18,cardW-36,165,PANEL2);
-                panel(s,x+36,cardY+36,cardW-72,129,BG);
-                text(s,"MARKPS4",x+100,cardY+78,3,BLUE);
-                text(s,"THEMES",x+100,cardY+112,2,WHITE);
-                text(s,"PROXIMAMENTE",x+20,cardY+215,2,MUTED);
-                text(s,"NUEVOS TEMAS",x+20,cardY+250,2,WHITE);
-                panel(s,x+18,cardY+318,cardW-36,58,PANEL2);
-                text(s,"EN PREPARACION",x+48,cardY+339,2,MUTED);
+                roundPanel(s,x+17,y+17,cardW-34,184,13,{10,19,31});
+                roundPanel(s,x+28,y+28,cardW-56,162,10,{15,28,43});
+                text(s,"MARKPS4",x+99,y+81,3,BLUE);
+                text(s,"THEMES",x+105,y+117,2,WHITE);
+                text(s,"PROXIMAMENTE",x+24,y+231,2,MUTED);
+                text(s,"NUEVOS TEMAS",x+24,y+268,2,WHITE);
+                roundPanel(s,x+18,y+333,cardW-36,65,15,{20,31,47});
+                text(s,"EN PREPARACION",x+58,y+358,2,MUTED);
+                text(s,"CATALOGO EN EXPANSION",x+24,y+420,1,MUTED);
             }
         }
-        panel(s,370,660,1470,66,PANEL);
-        panel(s,370,660,5,66,BLUE);
-        text(s,"ESTADO",395,684,2,MUTED);
-        text(s,installStatus,520,684,2,BLUE);
-        text(s,"X: INSTALAR TEMA    L1/R1: SECCIONES",372,770,2,MUTED);
+        liftedPanel(s,360,649,1484,72,{16,27,42},false);
+        roundPanel(s,378,668,8,32,3,BLUE);
+        text(s,"ESTADO",402,666,2,MUTED);
+        text(s,installStatus,530,666,2,BLUE);
+        text(s,"X  INSTALAR TEMA",362,758,2,WHITE);
+        text(s,"L1 / R1  CAMBIAR SECCION",625,758,2,MUTED);
     } else if (page==1) {
-        text(s,"TU COLECCION",372,190,2,BLUE);
-        panel(s,370,225,1470,230,PANEL);
-        panel(s,370,225,7,230,BLUE);
-        text(s,"TEMAS INSTALADOS",410,280,4,WHITE);
-        text(s,"EL SISTEMA PS4 GESTIONA LAS INSTALACIONES Y NOTIFICACIONES",412,340,2,MUTED);
-        text(s,"REVISA DESCARGAS Y NOTIFICACIONES DEL PS4",412,390,2,BLUE);
+        liftedPanel(s,360,166,1484,245,{16,28,44},true);
+        text(s,"TU COLECCION",400,209,3,BLUE);
+        text(s,"TEMAS INSTALADOS",400,261,4,WHITE);
+        text(s,"EL SISTEMA PS4 GESTIONA LAS INSTALACIONES Y NOTIFICACIONES",402,316,2,MUTED);
+        roundPanel(s,400,352,620,2,1,PANEL2);
+        text(s,"REVISA DESCARGAS Y NOTIFICACIONES DEL PS4",402,370,2,BLUE);
     } else {
-        text(s,"AJUSTES",372,190,2,BLUE);
-        const char *settings[]={"MARKPS4 THEMES - INTERFAZ NATIVA","CATALOGO DE TEMAS EN TARJETAS","INSTALACION MEDIANTE EL SISTEMA PS4"};
+        text(s,"EXPERIENCIA MARKPS4",362,165,2,BLUE);
+        const char *settings[]={"INTERFAZ NATIVA PARA PS4","CATALOGO DE TEMAS EN TARJETAS","INSTALACION MEDIANTE EL SISTEMA PS4"};
         for (int i=0;i<3;i++) {
-            int y=240+i*130;
-            panel(s,370,y,1470,100,PANEL);
-            panel(s,370,y,5,100,BLUE);
-            text(s,settings[i],410,y+40,2,WHITE);
+            int y=211+i*122;
+            liftedPanel(s,360,y,1484,91,{16,28,44},i==0);
+            roundPanel(s,386,y+27,7,36,3,i==0?BLUE:PANEL2);
+            text(s,settings[i],418,y+36,2,WHITE);
+            text(s,i==0?"ACTIVO":"INTEGRADO",1548,y+36,1,MUTED);
         }
     }
 
