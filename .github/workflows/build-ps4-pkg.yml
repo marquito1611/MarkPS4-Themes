@@ -6,7 +6,6 @@ on:
     paths:
       - "ps4-app/**"
       - "tools/**"
-      - "web/**"
       - ".github/workflows/build-ps4-pkg.yml"
   workflow_dispatch:
 
