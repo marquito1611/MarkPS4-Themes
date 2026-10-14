@@ -1,6 +1,6 @@
 <div align="center">
 
-# PKG MUTANT SHOP
+# MarkPS4 Themes
 
 **One app. Two jailbroken consoles. Every device in the house.**
 
@@ -72,9 +72,9 @@ straight to the console: from the console itself, from a PC, or from a phone.
 
 <div align="center">
 
-[<img src="https://img.youtube.com/vi/Wa768pBs0j0/maxresdefault.jpg" alt="PKG MUTANT SHOP walkthrough" width="640">](https://youtu.be/Wa768pBs0j0)
+[<img src="https://img.youtube.com/vi/Wa768pBs0j0/maxresdefault.jpg" alt="MarkPS4 Themes walkthrough" width="640">](https://youtu.be/Wa768pBs0j0)
 
-**[PKG MUTANT SHOP 3.96.0 — walkthrough](https://youtu.be/Wa768pBs0j0)** · more on **[@XavyProd](https://www.youtube.com/@XavyProd)**
+**[MarkPS4 Themes 3.96.0 — walkthrough](https://youtu.be/Wa768pBs0j0)** · more on **[@XavyProd](https://www.youtube.com/@XavyProd)**
 
 </div>
 
@@ -147,16 +147,16 @@ what is available upstream, and the difference. The list above is that output.
 You load the app **once per console, by hand**. After that the app does the loading — see
 [Sending payloads](#sending-payloads-and-homebrews) below.
 
-**On a PC** — run `PKG-MUTANT-SHOP.exe`. It creates `C:\Mutant Games\PS4` and `\PS5`, scans them,
+**On a PC** — run `MARKPS4-THEMES.exe`. It creates `C:\MarkPS4 Library\PS4` and `\PS5`, scans them,
 finds the consoles on the LAN, opens <http://localhost:8710> and sits in the tray. `config.json` is
 written beside the exe. Drop `.pkg` files into the folders.
 
-**On the PS5** — with Payload Manager running, load `PKG-MUTANT-SHOP.elf` from it. The ELF writes
+**On the PS5** — with Payload Manager running, load `MARKPS4-THEMES.elf` from it. The ELF writes
 the UI, starts the helper payloads that are not already running (today ShadowMountPlus and
-`ftpsrv`) once somebody has signed in, puts the **PKG MUTANT SHOP** tile under Media if it is
+`ftpsrv`) once somebody has signed in, puts the **MarkPS4 Themes** tile under Media if it is
 missing, and toasts that it is ready. Autostart can be delayed or switched off in the panel.
 
-**On the PS4** — load `PKG-MUTANT-SHOP-PS4.elf` through GoldHEN, or press the home-screen icon. The
+**On the PS4** — load `MARKPS4-THEMES-PS4.elf` through GoldHEN, or press the home-screen icon. The
 payload installs and updates that icon itself, from inside the ELF, with every PC switched off.
 A PS4 payload does not survive a reboot and GoldHEN has no autoload folder, so **a running companion
 hands it over again by itself** — after a restart the shop usually comes back with nobody pressing
@@ -176,7 +176,7 @@ the one in the picker at the top — not the device you happen to be holding.
 
 ### On the PS5
 
-Open **PKG MUTANT SHOP** under Media on the home screen. The console serves the page itself, so this
+Open **MarkPS4 Themes** under Media on the home screen. The console serves the page itself, so this
 works with every PC switched off: your installed games, the backups on your drives, the cheats and
 patches, and anything already on the console. When a PC companion is on the network the page finds it
 and the PC's library appears too — the page re-points itself at whichever companion announced itself
@@ -186,7 +186,7 @@ The console's own browser has both a stick cursor and D-pad focus, and the page 
 
 ### On the PS4
 
-Press the **PKG MUTANT SHOP** icon on the home screen. The icon re-loads the payload and opens the
+Press the **MarkPS4 Themes** icon on the home screen. The icon re-loads the payload and opens the
 page, so it is also how you bring the shop back after a restart without touching a PC. Everything the
 PS5 page does is here, aimed at the PS4: its library, its drives, its payloads and homebrews, its
 cheats.
@@ -240,7 +240,7 @@ they stay other people's work — the app drives them instead of making you do i
 cannot do is load itself onto a console that has no shop yet, which is why the first load is manual
 and a PS4 restart is handled by the icon or by a running companion.
 
-Your payload and homebrew files live in `Mutant Payloads & HomeBrews` beside your games folders; the
+Your payload and homebrew files live in `MarkPS4 Payloads & Homebrews` beside your games folders; the
 app creates it, and each console's payload also carries the ones it can start on its own.
 
 ---
@@ -248,7 +248,7 @@ app creates it, and each console's payload also carries the ones it can start on
 ## Updating
 
 The app checks its own releases and offers them **in the Payloads & Homebrews panel**, on the PKG
-MUTANT SHOP tile, exactly the way it offers a new ftpsrv or nanoDNS. The download is verified before
+MarkPS4 Themes tile, exactly the way it offers a new ftpsrv or nanoDNS. The download is verified before
 anything is replaced: the size must match, the marker must be present *inside* the bytes, and the
 old file is kept as `.bak` until the new one is proven complete. Taking an update replaces the file;
 sending it to a console stays a second, separate press.
@@ -299,9 +299,9 @@ PS5 **backups** take a different lane: the console copies the file to the drive 
       └──────────────┬───────────────────────────────┬───────────────────┘
                      │ /api/*                        │ /api/*
    ┌─────────────────▼───────────────┐   ┌───────────▼──────────────────────────────┐
-   │ PKG-MUTANT-SHOP.exe   (PC)      │   │ PKG-MUTANT-SHOP.elf      (PS5, :8710)     │
-   │ companion/server.py             │   │ PKG-MUTANT-SHOP-PS4.elf  (PS4, :8710)     │
-   │ • scans C:\Mutant Games\PS4|PS5 │   │ ps5-app/onconsole/server.c                │
+   │ MARKPS4-THEMES.exe   (PC)      │   │ MARKPS4-THEMES.elf      (PS5, :8710)     │
+   │ companion/server.py             │   │ MARKPS4-THEMES-PS4.elf  (PS4, :8710)     │
+   │ • scans C:\MarkPS4 Library\PS4|PS5 │   │ ps5-app/onconsole/server.c                │
    │ • serves packages (HTTP Range)  │◄──┤ ps4-app/onconsole/server_ps4.c            │
    │ • install queue, one per console│   │ • serves the UI from its own disk         │
    │ • confirms via bgft.db          │   │ • spawns the installer per install         │
@@ -328,9 +328,9 @@ the console browser has both a stick cursor and D-pad focus, so the page uses `:
 
 | Artifact | Command | Notes |
 |---|---|---|
-| `PKG-MUTANT-SHOP.exe` | `build_exe.cmd` | Runs from `companion/`. Every gate is fatal. |
-| `PKG-MUTANT-SHOP.elf` | `bash ps5-app/onconsole/build-wsl.sh` | PS5 payload SDK, in WSL. |
-| `PKG-MUTANT-SHOP-PS4.elf` | `bash ps4-app/build-all-wsl.sh` | **The whole chain.** The home-screen icon carries its own copy of the payload, so building only the ELF leaves a stale icon behind. |
+| `MARKPS4-THEMES.exe` | `build_exe.cmd` | Runs from `companion/`. Every gate is fatal. |
+| `MARKPS4-THEMES.elf` | `bash ps5-app/onconsole/build-wsl.sh` | PS5 payload SDK, in WSL. |
+| `MARKPS4-THEMES-PS4.elf` | `bash ps4-app/build-all-wsl.sh` | **The whole chain.** The home-screen icon carries its own copy of the payload, so building only the ELF leaves a stale icon behind. |
 
 Deploy a new PS5 build with `python companion/deploy.py elf`. Payload Manager resolves a load **by
 basename, from its own directory**, so the registered file is the one that has to change.
