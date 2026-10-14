@@ -9,7 +9,7 @@
 # prefix homebrew uses.
 
 TITLE       := MarkPS4 Themes
-VERSION     := 01.04
+VERSION     := 02.00
 TITLE_ID    := PKGM00001
 CONTENT_ID  := IV0000-PKGM00001_00-MARKPS4THEMES001
 
@@ -25,7 +25,7 @@ CONTENT_ID  := IV0000-PKGM00001_00-MARKPS4THEMES001
 # it reaches these - see the long note in pms/main.c. It is one extra needed module, and the
 # old theory that extra needed modules stopped this app launching is disproven: the launch
 # blocker was a missing BGFT task, and the app launches.
-LIBS        := -lc -lkernel -lSceSystemService
+LIBS        := -lc -lkernel -lc++ -lSceVideoOut -lScePad -lSceUserService
 
 ASSETS      := $(wildcard assets/**/*)
 LIBMODULES  := $(wildcard sce_module/*)
@@ -35,11 +35,13 @@ PROJDIR     := pms
 COMMONDIR   := $(TOOLCHAIN)/samples/_common
 INTDIR      := $(PROJDIR)/x64/Debug
 
-CFILES      := $(wildcard $(PROJDIR)/*.c)
-OBJS        := $(patsubst $(PROJDIR)/%.c, $(INTDIR)/%.o, $(CFILES))
+CPPFILES    := $(wildcard $(PROJDIR)/*.cpp)
+COMMONFILES := $(wildcard $(COMMONDIR)/*.cpp)
+OBJS        := $(patsubst $(PROJDIR)/%.cpp, $(INTDIR)/%.o, $(CPPFILES)) $(patsubst $(COMMONDIR)/%.cpp, $(INTDIR)/common-%.o, $(COMMONFILES))
 
 CFLAGS      := --target=x86_64-pc-freebsd12-elf -fPIC -funwind-tables -c $(EXTRAFLAGS) \
                -isysroot $(TOOLCHAIN) -isystem $(TOOLCHAIN)/include
+CXXFLAGS    := $(CFLAGS) -isystem $(TOOLCHAIN)/include/c++/v1
 LDFLAGS     := -m elf_x86_64 -pie --script $(TOOLCHAIN)/link.x --eh-frame-hdr -L$(TOOLCHAIN)/lib \
                $(LIBS) $(TOOLCHAIN)/lib/crt1.o
 
@@ -56,7 +58,7 @@ all: $(TARGET)
 $(TARGET): pkg.gp4
 	$(TOOLCHAIN)/bin/$(CDIR)/PkgTool.Core pkg_build pkg.gp4 .
 
-pkg.gp4: eboot.bin sce_sys/about/right.sprx sce_sys/param.sfo sce_sys/icon0.png pms-payload.elf $(LIBMODULES) $(ASSETS)
+pkg.gp4: eboot.bin sce_sys/about/right.sprx sce_sys/param.sfo sce_sys/icon0.png $(LIBMODULES) $(ASSETS)
 	$(TOOLCHAIN)/bin/$(CDIR)/create-gp4 -out $@ --content-id=$(CONTENT_ID) --files "$^"
 
 sce_sys/param.sfo: Makefile
@@ -77,8 +79,11 @@ eboot.bin: $(OBJS)
 	$(TOOLCHAIN)/bin/$(CDIR)/create-fself -in=$(INTDIR)/$(PROJDIR).elf -out=$(INTDIR)/$(PROJDIR).oelf \
 		--eboot "eboot.bin" --paid 0x3800000000000011
 
-$(INTDIR)/%.o: $(PROJDIR)/%.c
-	$(CC) $(CFLAGS) -o $@ $<
+$(INTDIR)/%.o: $(PROJDIR)/%.cpp
+	$(TOOLCHAIN)/bin/clang++ $(CXXFLAGS) -o $@ $<
+
+$(INTDIR)/common-%.o: $(COMMONDIR)/%.cpp
+	$(TOOLCHAIN)/bin/clang++ $(CXXFLAGS) -o $@ $<
 
 clean:
 	rm -f $(TARGET) pkg.gp4 sce_sys/param.sfo eboot.bin \
