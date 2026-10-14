@@ -22,7 +22,7 @@ CONTENT_ID  := IV0000-PKGM00001_00-MARKPS4THEMES001
 # known-good reference is free and cannot hurt, which is the whole argument for it.
 # -lSceSystemService is what makes HideSplashScreen and LoadExec real calls instead of NULL
 # pointers. An application sandbox cannot open /system/common/lib, so linking is the ONLY way
-# it reaches these - see the long note in pms/main.c. It is one extra needed module, and the
+# it reaches these - the native renderer lives in pms/main.cpp. It is one extra needed module, and the
 # old theory that extra needed modules stopped this app launching is disproven: the launch
 # blocker was a missing BGFT task, and the app launches.
 LIBS        := -lc -lkernel -lc++ -lSceVideoOut -lScePad -lSceUserService
@@ -84,7 +84,7 @@ $(INTDIR)/%.o: $(PROJDIR)/%.cpp
 	$(CXX) $(CXXFLAGS) -o $@ $<
 
 $(INTDIR)/common-%.o: $(COMMONDIR)/%.cpp
-	$(TOOLCHAIN)/bin/clang++ $(CXXFLAGS) -o $@ $<
+	$(CXX) $(CXXFLAGS) -o $@ $<
 
 clean:
 	rm -f $(TARGET) pkg.gp4 sce_sys/param.sfo eboot.bin \
