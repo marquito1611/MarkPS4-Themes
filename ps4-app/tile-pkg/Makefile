@@ -1,4 +1,4 @@
-# PKG MUTANT SHOP - the PS4 dashboard app package.
+# MarkPS4 Themes - the PS4 dashboard app package.
 #
 # Adapted from the OpenOrbis toolchain's own sample Makefile, so the build steps are the ones the
 # toolchain documents rather than something invented here. Driven by build-wsl.sh, which fetches
@@ -8,10 +8,10 @@
 # it is on. It cannot collide with a retail game - those are CUSA/NPXS - and IV0000 is the publisher
 # prefix homebrew uses.
 
-TITLE       := PKG MUTANT SHOP
+TITLE       := MarkPS4 Themes
 VERSION     := 01.04
 TITLE_ID    := PKGM00001
-CONTENT_ID  := IV0000-PKGM00001_00-PKGMUTANTSHOP001
+CONTENT_ID  := IV0000-PKGM00001_00-MARKPS4THEMES001
 
 # ONLY WHAT THE TOOLCHAIN'S OWN WORKING SAMPLE LINKS. hello_world, the one sample known to launch
 # on this console family, needs libkernel alone; everything else is resolved at run time in main.c.
