@@ -48,6 +48,38 @@ jobs:
           test -x "$TOOLCHAIN/bin/linux/create-fself"
           test -f "$TOOLCHAIN/lib/crtlib.o"
 
+      - name: Download Assassin's Creed PKGs and generate metadata
+        run: |
+          set -euo pipefail
+          python3 -m pip install --user --upgrade gdown
+          mkdir -p "$HOME/.local/bin"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          gdown "1KK8yqBinHkxRbuLCY4O4tJzApXvPYm2n" -O /tmp/assassins-creed-package-1.pkg
+          gdown "1OXuuN5d7hLYxABRVHHP-Qz7AV6-CC1rR" -O /tmp/assassins-creed-package-2.pkg
+          python3 - <<'PY'
+          import os, pathlib
+          pairs = [
+              (1, "/tmp/assassins-creed-package-1.pkg", "1KK8yqBinHkxRbuLCY4O4tJzApXvPYm2n"),
+              (2, "/tmp/assassins-creed-package-2.pkg", "1OXuuN5d7hLYxABRVHHP-Qz7AV6-CC1rR"),
+          ]
+          out = ["#pragma once", "/* Generated from the real PKG files by GitHub Actions. */"]
+          for n, path, drive_id in pairs:
+              data = pathlib.Path(path).read_bytes()
+              if len(data) < 0x70 or data[:4] != b"\x7fPKG":
+                  raise SystemExit(f"Package {n} is not a valid PS4 PKG header")
+              cid = data[0x40:0x70].split(b"\0", 1)[0].decode("ascii", "strict")
+              if len(cid) < 20 or "-" not in cid or "_" not in cid:
+                  raise SystemExit(f"Could not read content ID from package {n}: {cid!r}")
+              out += [
+                  f'#define MARKPS4_PKG{n}_URL "https://drive.google.com/uc?export=download&id={drive_id}"',
+                  f'#define MARKPS4_PKG{n}_CONTENT_ID "{cid}"',
+                  f"#define MARKPS4_PKG{n}_SIZE {len(data)}u",
+              ]
+              print(f"PKG {n}: {len(data)} bytes; content ID: {cid}")
+          pathlib.Path("ps4-app/tile-pkg/pms/theme_packages.h").write_text("\n".join(out) + "\n")
+          PY
+          rm -f /tmp/assassins-creed-package-1.pkg /tmp/assassins-creed-package-2.pkg
+
       - name: Build native PS4 Themes PKG
         run: |
           export PATH="$HOME/clang18/usr/lib/llvm-18/bin:$HOME/bin:$PATH"
