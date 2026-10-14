@@ -48,10 +48,10 @@ jobs:
           test -x "$TOOLCHAIN/bin/linux/create-fself"
           test -f "$TOOLCHAIN/lib/crtlib.o"
 
-      - name: Build PS4 payloads and PKG
+      - name: Build native PS4 Themes PKG
         run: |
           export PATH="$HOME/clang18/usr/lib/llvm-18/bin:$HOME/bin:$PATH"
-          bash ps4-app/build-all-wsl.sh
+          bash ps4-app/tile-pkg/build-wsl.sh
 
       - name: Verify package exists
         run: |
