@@ -1,4 +1,4 @@
-# PKG MUTANT SHOP — the PS4 payload
+# MarkPS4 Themes — the PS4 payload
 
 This is the PS4 half of the shop. It serves the same web UI and speaks the same JSON API as the PS5
 payload (`ps5-app/onconsole/server.c`), so the companion and the page need no per-console code paths
@@ -33,7 +33,7 @@ app — the shop looks and behaves identically on both consoles.
 ## Building
 
 ```bash
-bash ps4-app/onconsole/build-wsl.sh        # WSL; writes PKG-MUTANT-SHOP-PS4.elf beside itself
+bash ps4-app/onconsole/build-wsl.sh        # WSL; writes MARKPS4-THEMES-PS4.elf beside itself
 ```
 
 It fetches and patches the SDK the first time (see below), then runs **the same gates the PS5 build
@@ -210,7 +210,7 @@ PS5's "bgft row 1026/1036" confirmation has no equivalent — the app.pkg check 
 
 ## The dashboard app
 
-There is one: **`ps4-app/tile-pkg/`** builds `IV0000-PKGM00001_00-PKGMUTANTSHOP001.pkg`, a real
+There is one: **`ps4-app/tile-pkg/`** builds `IV0000-PKGM00001_00-MARKPS4THEMES001.pkg`, a real
 fake-signed PS4 application that puts the shop on the home screen. Read that folder's README for
 how it is built and why it is shaped the way it is.
 
@@ -226,9 +226,9 @@ build cuts the cycle.** `build-all-wsl.sh` builds three artefacts in a line, nev
 
 | | | |
 | --- | --- | --- |
-| 1 | `PKG-MUTANT-SHOP-PS4-LITE.elf` | the same shop, with no package inside it (~1.7 MB) |
-| 2 | `IV0000-PKGM00001_00-PKGMUTANTSHOP001.pkg` | the home-screen app, carrying **1** (~6.6 MB) |
-| 3 | `PKG-MUTANT-SHOP-PS4.elf` | the shop, carrying **2** (~8.3 MB) |
+| 1 | `MARKPS4-THEMES-PS4-LITE.elf` | the same shop, with no package inside it (~1.7 MB) |
+| 2 | `IV0000-PKGM00001_00-MARKPS4THEMES001.pkg` | the home-screen app, carrying **1** (~6.6 MB) |
+| 3 | `MARKPS4-THEMES-PS4.elf` | the shop, carrying **2** (~8.3 MB) |
 
 Lite gives up exactly one thing - installing the home-screen app - and whoever is running lite got
 there by pressing that app, so it is already installed. A build gate refuses to build when
@@ -251,10 +251,10 @@ So every install now records `app.pkg`'s size **and mtime** before it starts (`a
 `job_baseline_locked()`) and nothing is finished until that file changes. And because a version number
 cannot detect the state that cancellation left behind, `tile_bytes_match()` compares the installed
 package against the copy inside this very ELF, 64 KB at a time, and reinstalls when they differ -
-bounded to one attempt per build by `/data/pkg-mutant-shop/tile-repair.stamp`, so a firmware that ever
+bounded to one attempt per build by `/data/markps4-themes/tile-repair.stamp`, so a firmware that ever
 re-wrapped `app.pkg` could not turn this into an install on every boot.
 
-`install_path_cleanup()` then removes every `pms-tile*.pkg` under `/data/pkg-mutant-shop` - only after
+`install_path_cleanup()` then removes every `pms-tile*.pkg` under `/data/markps4-themes` - only after
 the install is proven, only in that directory, only that name pattern. `/api/tile/status` reports on
 all of it, from `app.pkg` on disk rather than an `app.db` row.
 
@@ -296,7 +296,7 @@ when the console replies `ok: true`, and otherwise paints "unknown" instead of a
 | 3232 | klog. **The only way to see payload output**; `printf` goes nowhere when injected |
 | 9090 | GoldHEN's payload loader — HTTP POST the raw ELF; 200 means accepted |
 
-Deploy: `curl -X POST --data-binary @PKG-MUTANT-SHOP-PS4.elf http://<ps4>:9090/`, wait ~12 s, then
+Deploy: `curl -X POST --data-binary @MARKPS4-THEMES-PS4.elf http://<ps4>:9090/`, wait ~12 s, then
 check `/api/health`. Reloading over a running copy is fine — the old one hands the port over.
 
 Note that **9090 does not survive rest mode**: after a suspend/resume, FTP and klog come back and
