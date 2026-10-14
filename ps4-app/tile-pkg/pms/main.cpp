@@ -303,29 +303,39 @@ static void render(Scene2D *s, int selected, int page) {
     panel(s,370,150,1470,2,PANEL2);
 
     if (page==0) {
-        // Una sola tarjeta para el tema Assassin's Creed; sus dos PKG se gestionan con un boton.
-        const int x=370, cardY=190, cardW=1470, cardH=660;
-        panel(s,x,cardY,cardW,cardH,PANEL);
-        panel(s,x,cardY,cardW,4,BLUE);
-        panel(s,x+20,cardY+22,500,330,BG);
-        s->DrawRGBImage(x+20,cardY+22,500,330,kAssassinsCreedRGB,240,165);
-        panel(s,x+20,cardY+348,500,4,BLUE);
-        text(s,"ASSASSIN'S CREED",x+555,cardY+70,5,WHITE);
-        text(s,"TEMA COMPLETO",x+558,cardY+135,3,BLUE);
-        text(s,"INCLUYE LOS DOS PAQUETES DE DESCARGA",x+558,cardY+190,2,MUTED);
-        text(s,"LAS DOS PARTES SE ENVIAN DESDE UN SOLO BOTON",x+558,cardY+230,2,MUTED);
-        panel(s,x+555,cardY+280,850,2,PANEL2);
-        panel(s,x+555,cardY+320,850,82,BLUE);
-        panel(s,x+555,cardY+320,5,82,BLUE_DARK);
-        text(s,"INSTALAR TEMA COMPLETO",x+730,cardY+349,4,BLACK);
-        text(s,"PULSA X PARA INICIAR AMBAS PARTES",x+558,cardY+435,2,MUTED);
-        text(s,"PAQUETE 1 + PAQUETE 2",x+558,cardY+475,2,BLUE);
-
-        panel(s,370,890,1470,66,PANEL);
-        panel(s,370,890,5,66,BLUE);
-        text(s,"ESTADO",395,914,2,MUTED);
-        text(s,installStatus,520,914,2,BLUE);
-        text(s,"X: INSTALAR TEMA COMPLETO    L1/R1: SECCIONES",372,990,2,MUTED);
+        // Catalogo compacto de cuatro tarjetas por fila, preparado para crecer.
+        const int cardW=350, cardH=440, gap=22, cardY=190;
+        const int xs[4]={370,742,1114,1486};
+        for (int i=0;i<4;i++) {
+            int x=xs[i];
+            panel(s,x,cardY,cardW,cardH,PANEL);
+            panel(s,x,cardY,cardW,3,i==0?BLUE:PANEL2);
+            if (i==0) {
+                panel(s,x+18,cardY+18,cardW-36,165,BG);
+                s->DrawRGBImage(x+18,cardY+18,cardW-36,165,kAssassinsCreedRGB,240,165);
+                text(s,"ASSASSIN'S",x+20,cardY+205,3,WHITE);
+                text(s,"CREED",x+20,cardY+241,3,WHITE);
+                text(s,"TEMA COMPLETO",x+20,cardY+284,2,BLUE);
+                panel(s,x+18,cardY+318,cardW-36,58,BLUE);
+                text(s,"INSTALAR",x+105,cardY+339,3,BLACK);
+                text(s,"2 PKG INCLUIDOS",x+20,cardY+395,2,MUTED);
+            } else {
+                panel(s,x+18,cardY+18,cardW-36,165,PANEL2);
+                panel(s,x+36,cardY+36,cardW-72,129,BG);
+                text(s,"MARKPS4",x+100,cardY+78,3,BLUE);
+                text(s,"THEMES",x+100,cardY+112,2,WHITE);
+                text(s,"PROXIMAMENTE",x+20,cardY+215,2,MUTED);
+                text(s,"NUEVOS TEMAS",x+20,cardY+250,2,WHITE);
+                panel(s,x+18,cardY+318,cardW-36,58,PANEL2);
+                text(s,"EN PREPARACION",x+48,cardY+339,2,MUTED);
+            }
+        }
+        panel(s,370,660,1470,66,PANEL);
+        panel(s,370,660,5,66,BLUE);
+        text(s,"ESTADO",395,684,2,MUTED);
+        text(s,installStatus,520,684,2,BLUE);
+        text(s,"X: INSTALAR TEMA    L1/R1: SECCIONES",372,770,2,MUTED);
+    }
     } else if (page==1) {
         text(s,"TU COLECCION",372,190,2,BLUE);
         panel(s,370,225,1470,230,PANEL);
