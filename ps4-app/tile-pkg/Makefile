@@ -31,6 +31,7 @@ ASSETS      := $(wildcard assets/**/*)
 LIBMODULES  := $(wildcard sce_module/*)
 
 TOOLCHAIN   := $(OO_PS4_TOOLCHAIN)
+CXX         := clang++
 PROJDIR     := pms
 COMMONDIR   := $(TOOLCHAIN)/samples/_common
 INTDIR      := $(PROJDIR)/x64/Debug
@@ -80,7 +81,7 @@ eboot.bin: $(OBJS)
 		--eboot "eboot.bin" --paid 0x3800000000000011
 
 $(INTDIR)/%.o: $(PROJDIR)/%.cpp
-	$(TOOLCHAIN)/bin/clang++ $(CXXFLAGS) -o $@ $<
+	$(CXX) $(CXXFLAGS) -o $@ $<
 
 $(INTDIR)/common-%.o: $(COMMONDIR)/%.cpp
 	$(TOOLCHAIN)/bin/clang++ $(CXXFLAGS) -o $@ $<
