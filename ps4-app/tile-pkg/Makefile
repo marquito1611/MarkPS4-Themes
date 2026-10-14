@@ -25,7 +25,7 @@ CONTENT_ID  := IV0000-PKGM00001_00-MARKPS4THEMES001
 # it reaches these - the native renderer lives in pms/main.cpp. It is one extra needed module, and the
 # old theory that extra needed modules stopped this app launching is disproven: the launch
 # blocker was a missing BGFT task, and the app launches.
-LIBS        := -lc -lkernel -lc++ -lSceVideoOut -lScePad -lSceUserService
+LIBS        := -lc -lkernel -lc++ -lSceVideoOut -lScePad -lSceUserService -lSceBgft
 
 ASSETS      := $(wildcard assets/**/*)
 LIBMODULES  := $(wildcard sce_module/*)
