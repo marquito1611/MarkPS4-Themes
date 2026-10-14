@@ -1,6 +1,6 @@
-# PKG MUTANT SHOP — the PS4 dashboard app
+# MarkPS4 Themes — the PS4 dashboard app
 
-This builds **`IV0000-PKGM00001_00-PKGMUTANTSHOP001.pkg`**: a real, fake-signed PS4 application
+This builds **`IV0000-PKGM00001_00-MARKPS4THEMES001.pkg`**: a real, fake-signed PS4 application
 package that puts the shop on the console's home screen.
 
 Before this existed, a PS4 had nothing to press. The shop only existed while a payload happened to
@@ -23,7 +23,7 @@ bash ps4-app/tile-pkg/build-wsl.sh     # WSL; fetches its toolchain on first run
 | the package has been **installed** | **yes** — `/user/app/PKGM00001/app.pkg`, 6,619,136 bytes, with `app.pbm` / `app.json` / `app.xml` beside it |
 | the ELF **updates** it | **yes**, verified — `01.00` → `01.01` → `01.02` → `01.03` on the hardware |
 | the installed bytes are ours | **yes**, verified — read back over FTP and hashed: `01.03` = `5968c773…fb`, identical to the build |
-| the icon is on the home screen | **yes** — listed by the console as *PKG MUTANT SHOP* |
+| the icon is on the home screen | **yes** — listed by the console as *MarkPS4 Themes* |
 | **the eboot has been run** | **yes** — as of 2026-09-21. It launches, runs, and opens the shop in the browser |
 | why it used to fail | **our own install engine** released the BGFT task the title needs to launch. Fixed |
 | what still needs work in the eboot | it cannot load system modules from inside the sandbox, and it exits with `SIGSYS` |
@@ -86,7 +86,7 @@ proven. The launch is blocked outside this repository.
 | | |
 | --- | --- |
 | title id | `PKGM00001` — the same identity the PS5 tile uses. One app, whichever console it is on, and it cannot collide with a game (those are `CUSA` / `NPXS`). |
-| content id | `IV0000-PKGM00001_00-PKGMUTANTSHOP001` (`IV0000` is the homebrew publisher prefix) |
+| content id | `IV0000-PKGM00001_00-MARKPS4THEMES001` (`IV0000` is the homebrew publisher prefix) |
 | category | `gd`, content type `0x1A`, flags `0x0A000000` — **byte-for-byte the shape of a retail base game** |
 | contents | `eboot.bin`, `sce_sys/param.sfo`, `sce_sys/icon0.png` — **and nothing else** |
 
@@ -130,7 +130,7 @@ it with the installed app's `APP_VER` from the console's own `tbl_appinfo`:
 learned on the PS5, where trusting the row produced 53 phantom installs. Versions compare
 numerically, so `1.00` and `01.00` are the same number and a leading zero cannot look older.
 
-The staged copy goes to `/data/pkg-mutant-shop/pms-tile.pkg` — **our own folder**. Nothing this app
+The staged copy goes to `/data/markps4-themes/pms-tile.pkg` — **our own folder**. Nothing this app
 does touches the jailbreak's files or folders; the jailbreak's only job is to start the ELF.
 
 ### Nothing privileged
