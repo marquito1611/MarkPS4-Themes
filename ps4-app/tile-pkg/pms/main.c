@@ -1,4 +1,4 @@
-/* PKG MUTANT SHOP - the PS4 home-screen app.
+/* MarkPS4 Themes - the PS4 home-screen app.
  *
  * WHAT IT IS. The icon on the PS4's home screen, and the PS4 twin of the PS5's dashboard tile.
  * Pressing it gets the shop running on this console and then opens it in the console's own browser.
@@ -419,7 +419,7 @@ int main(void) {
     /* BEFORE ANY SOCKET EXISTS. See the note beside sock_no_sigpipe: an unhandled SIGPIPE ends
        this process instantly and silently, part-way through handing over the payload. */
     signal(SIGPIPE, SIG_IGN);
-    printf("[PMS] PKG MUTANT SHOP app starting\n");
+    printf("[PMS] MarkPS4 Themes app starting\n");
     /* WITHOUT THIS THE CONSOLE SHOWS THE LOADING SCREEN AND NOTHING ELSE, which from the sofa is
        indistinguishable from an app that does not work. The toolchain's own samples call it first
        thing; ours never did - and until this build it was called through a pointer that was always
@@ -434,13 +434,13 @@ int main(void) {
 
     if (up) {
         printf("[PMS] the shop is answering - opening it\n");
-        notify("Opening PKG MUTANT SHOP");
+        notify("Opening MarkPS4 Themes");
         /* ASKING THE SHOP IS THE ONLY ROUTE. It is not sandboxed and this is measured working on
            the hardware; the app's own browser call was a guessed signature and is gone. */
         if (ask_shop_to_open() != 0)
             { char _m[128];
               snprintf(_m, sizeof(_m),
-                       "PKG MUTANT SHOP is running\nOpen 127.0.0.1:%d in the browser", SHOP_PORT);
+                       "MarkPS4 Themes is running\nOpen 127.0.0.1:%d in the browser", SHOP_PORT);
               notify(_m); }
         leave();
     }
@@ -450,7 +450,7 @@ int main(void) {
        outlives it. It has to outlive us: the moment the browser comes forward this app is
        suspended, so a shop served from HERE would stop answering exactly when the page loaded. */
     printf("[PMS] nothing on :%d - starting the shop\n", SHOP_PORT);
-    notify("Starting PKG MUTANT SHOP");
+    notify("Starting MarkPS4 Themes");
 
     /* TWO ROUNDS. Pressing the icon seconds after the exploit lands can find the loader still
        coming up, and the whole cost of being wrong about that is one refused connect and two
@@ -499,11 +499,11 @@ int main(void) {
 
     if (shop_is_up()) {
         printf("[PMS] the shop is answering after payload hand-off\n");
-        notify("Opening PKG MUTANT SHOP");
+        notify("Opening MarkPS4 Themes");
         if (ask_shop_to_open() != 0) {
             char _m[128];
             snprintf(_m, sizeof(_m),
-                     "PKG MUTANT SHOP is running\nOpen 127.0.0.1:%d in the browser", SHOP_PORT);
+                     "MarkPS4 Themes is running\nOpen 127.0.0.1:%d in the browser", SHOP_PORT);
             notify(_m);
         }
         leave();
@@ -525,12 +525,14 @@ int main(void) {
     printf("[PMS] no payload loader answered; jailbreak %s\n",
            jb ? "IS loaded (its payload loader is not)" : "is NOT loaded");
     if (jb)
-        notify("PKG MUTANT SHOP cannot start\n"
-               "The jailbreak is running but its payload loader is not - this happens after rest "
-               "mode. Run the jailbreak again, then open this.");
+        notify("MarkPS4 Themes cannot start\n"
+               "Jailbreak detected, but no payload loader answered on ports 9090 or 9021. "
+               "Restart the jailbreak payload loader, then open this again.");
     else
-        notify("PKG MUTANT SHOP cannot start\n"
-               "This PS4 is not jailbroken right now - run the jailbreak, then open this.");
+        notify("MarkPS4 Themes cannot start\n"
+               "No payload loader or known FTP service answered. This does NOT prove the jailbreak "
+               "is inactive; check that the jailbreak's BinLoader/payload loader is running, "
+               "then open MarkPS4 Themes again.");
     sceKernelUsleep(8 * 1000000);
     leave();
 }
