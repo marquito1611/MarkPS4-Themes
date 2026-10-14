@@ -81,7 +81,7 @@ jobs:
           if "DrawRGBImage(" not in header:
               if declaration not in header:
                   raise SystemExit("Could not find Scene2D DrawRectangle declaration")
-              header = header.replace(declaration, declaration + "\n\\tvoid DrawRGBImage(int x, int y, int w, int h, const uint8_t *rgb, int imageW, int imageH);")
+              header = header.replace(declaration, declaration + "\n    void DrawRGBImage(int x, int y, int w, int h, const uint8_t *rgb, int imageW, int imageH);")
               header_path.write_text(header)
           source = source_path.read_text()
           marker = "#ifdef GRAPHICS_USES_FONT\nvoid Scene2D::DrawText"
