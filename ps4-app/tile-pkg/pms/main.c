@@ -456,31 +456,65 @@ int main(void) {
        coming up, and the whole cost of being wrong about that is one refused connect and two
        seconds. The payload is re-read from /app0 each time, so a half-sent first attempt cannot
        leave the second one sending the tail of it. */
-    int handed = 0;
-    for (int round = 0; round < 2 && !handed; round++) {
+    /*
+     * Do NOT use "send HTTP || send RAW" here. A successful write only proves that the
+     * bytes reached a loader socket; it does not prove that the ELF was started. The old
+     * short-circuit treated the first complete send as success, skipped port 9021, then
+     * waited 30 seconds for a server that might never start.
+     *
+     * Test each loader independently. After a complete transfer, give the shop time to
+     * become reachable before trying the other protocol. A port whose connection/send
+     * failed can be retried on the second round; a port that accepted the complete ELF
+     * is not sent the same payload twice.
+     */
+    int sent_any = 0;
+    int http_sent = 0, raw_sent = 0;
+    for (int round = 0; round < 2 && !shop_is_up(); round++) {
         if (round) sceKernelUsleep(2 * 1000000);
-        handed = (send_payload(LOADER_HTTP, 1) == 0) || (send_payload(LOADER_RAW, 0) == 0);
-    }
-    /* THE TELEVISION IS THE ONLY DISPLAY THIS PROGRAM HAS. The splash is hidden and it draws
-       nothing, so between here and the browser coming forward the screen is black - and a black
-       screen is what a crash looks like too. One line, once, so the wait is visibly a wait. */
-    if (handed) notify("PKG MUTANT SHOP is starting\nThis takes a few seconds");
-    if (handed) {
-        for (int i = 0; i < 30; i++) {
-            sceKernelUsleep(1000 * 1000);
-            if (shop_is_up()) {
-                printf("[PMS] the shop came up after %d second(s)\n", i + 1);
-                notify("Opening PKG MUTANT SHOP");
-                if (ask_shop_to_open() != 0)
-                    { char _m[128];
-                      snprintf(_m, sizeof(_m),
-                               "PKG MUTANT SHOP is running\nOpen 127.0.0.1:%d in the browser", SHOP_PORT);
-                      notify(_m); }
-                leave();
+
+        for (int which = 0; which < 2 && !shop_is_up(); which++) {
+            int port = which == 0 ? LOADER_HTTP : LOADER_RAW;
+            int is_http = which == 0;
+            if ((is_http && http_sent) || (!is_http && raw_sent)) continue;
+
+            printf("[PMS] trying payload loader :%d (%s)\n",
+                   port, is_http ? "HTTP" : "raw ELF");
+            if (send_payload(port, is_http) != 0) {
+                printf("[PMS] loader :%d did not accept a complete transfer\n", port);
+                continue;
+            }
+
+            sent_any = 1;
+            if (is_http) http_sent = 1;
+            else raw_sent = 1;
+
+            notify("Payload sent; waiting for the shop");
+            /* A successful transfer is not a successful launch. Verify the actual service. */
+            for (int sec = 0; sec < 15; sec++) {
+                if (shop_is_up()) break;
+                sceKernelUsleep(1000 * 1000);
             }
         }
-        notify("PKG MUTANT SHOP did not finish starting\n"
-               "Try opening this again in a moment");
+    }
+
+    if (shop_is_up()) {
+        printf("[PMS] the shop is answering after payload hand-off\n");
+        notify("Opening PKG MUTANT SHOP");
+        if (ask_shop_to_open() != 0) {
+            char _m[128];
+            snprintf(_m, sizeof(_m),
+                     "PKG MUTANT SHOP is running\nOpen 127.0.0.1:%d in the browser", SHOP_PORT);
+            notify(_m);
+        }
+        leave();
+    }
+
+    if (sent_any) {
+        printf("[PMS] a loader accepted the payload, but the shop never answered on :%d\n",
+               SHOP_PORT);
+        notify("Payload sent, but the shop did not start\n"
+               "Re-run the jailbreak payload loader and try again");
+        sceKernelUsleep(8 * 1000000);
         leave();
     }
 
