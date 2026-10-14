@@ -231,71 +231,94 @@ static void render(Scene2D *s, int selected, int page) {
     s->FrameBufferClear();
     s->FrameBufferFill(BG);
 
-    // Panel lateral de la interfaz nativa MarkPS4 Themes.
+    // Sidebar fija: navegación por secciones a la izquierda.
     panel(s,0,0,315,H,PANEL);
     panel(s,314,0,2,H,{25,48,69});
     panel(s,0,0,6,H,BLUE);
-    text(s,"MARK",38,52,7,WHITE);
-    text(s,"PS4",38,104,7,BLUE);
-    text(s,"THEME CENTER",40,166,2,MUTED);
-    panel(s,35,220,245,2,PANEL2);
 
-    panel(s,28,252,260,72,page==0?PANEL2:PANEL);
-    if (page==0) panel(s,28,252,5,72,BLUE);
-    text(s,"TEMAS",55,280,3,page==0?WHITE:MUTED);
+    // Emblema MarkPS4 dibujado con las primitivas nativas.
+    panel(s,36,42,64,64,BG);
+    panel(s,36,42,64,4,BLUE);
+    panel(s,36,102,64,4,BLUE_DARK);
+    panel(s,36,42,4,64,BLUE);
+    panel(s,96,42,4,64,BLUE);
+    text(s,"M",51,60,4,WHITE);
+    text(s,"MarkPS4",115,49,3,WHITE);
+    text(s,"THEMES STORE",116,83,2,BLUE);
+    panel(s,35,135,245,2,PANEL2);
 
-    panel(s,28,340,260,72,page==1?PANEL2:PANEL);
-    if (page==1) panel(s,28,340,5,72,BLUE);
-    text(s,"INSTALADOS",55,368,3,page==1?WHITE:MUTED);
+    panel(s,28,176,260,76,page==0?PANEL2:PANEL);
+    if (page==0) panel(s,28,176,5,76,BLUE);
+    text(s,"TEMAS",58,202,3,page==0?WHITE:MUTED);
 
-    panel(s,35,435,245,2,PANEL2);
-    text(s,"MARKPS4",40,465,3,BLUE);
-    text(s,"APP NATIVA PS4",40,500,2,MUTED);
-    text(s,"L1 / R1 SECCIONES",40,1000,2,MUTED);
+    panel(s,28,270,260,76,page==1?PANEL2:PANEL);
+    if (page==1) panel(s,28,270,5,76,BLUE);
+    text(s,"INSTALADOS",58,296,3,page==1?WHITE:MUTED);
 
-    // Main content.
-    text(s,"BIBLIOTECA DE TEMAS",370,58,5,WHITE);
-    text(s,page==0?"PERSONALIZA TU PS4 A TU ESTILO":"CONSULTA TUS TEMAS REGISTRADOS",372,112,2,MUTED);
+    panel(s,35,385,245,2,PANEL2);
+    text(s,"MARKPS4 THEMES",40,414,2,BLUE);
+    text(s,"TIENDA NATIVA",40,446,2,MUTED);
+    text(s,"L1 / R1: SECCIONES",40,1000,2,MUTED);
+
+    // Cabecera del catálogo.
+    text(s,page==0?"CATALOGO DE TEMAS":"TEMAS INSTALADOS",370,58,5,WHITE);
+    text(s,page==0?"ELIGE UN TEMA PARA TU PS4":"REVISA TU COLECCION",372,112,2,MUTED);
     panel(s,1570,55,270,48,PANEL2);
     panel(s,1570,55,3,48,BLUE);
     text(s,"MARKPS4  /  PS4",1590,74,2,BLUE);
     panel(s,370,150,1470,2,PANEL2);
 
     if (page==0) {
-        text(s,"TEMA DESTACADO",372,190,2,BLUE);
-        panel(s,370,225,1470,285,PANEL);
-        panel(s,370,225,7,285,BLUE);
-        // Decorative blue artwork block to echo the reference theme card.
-        panel(s,405,250,285,235,BG);
-        panel(s,405,250,285,3,BLUE);
-        panel(s,405,482,285,3,BLUE_DARK);
-        text(s,"AC",485,315,8,BLUE);
-        text(s,"THEME",462,390,3,WHITE);
-        text(s,"ASSASSIN'S CREED",730,260,5,WHITE);
-        text(s,"PAQUETES DE TEMAS PARA PS4",733,320,2,MUTED);
-        panel(s,730,355,220,34,PANEL2);
-        text(s,"TEMA PARA PS4",746,366,2,BLUE);
-        text(s,"INSTALA LOS DOS PAQUETES EN ORDEN",730,420,2,WHITE);
-        text(s,"ESPERA EL AVISO DE INSTALACION ANTES DEL PAQUETE 2",730,453,2,MUTED);
-
-        text(s,"PAQUETES DISPONIBLES",372,555,2,BLUE);
+        // Dos tarjetas grandes. El arte se dibuja con primitivas nativas para
+        // que el catalogo no dependa de una pagina web ni de recursos remotos.
+        const int cardX[2]={370,1120};
+        const int cardW=700, cardY=190, cardH=660;
         for (int i=0;i<2;i++) {
-            int y=590+i*135;
-            panel(s,370,y,1470,112,(selectedPackage==i)?PANEL2:PANEL);
-            panel(s,370,y,5,112,(selectedPackage==i)?BLUE:PANEL2);
-            panel(s,395,y+20,64,64,(selectedPackage==i)?BLUE:PANEL2);
-            text(s,i==0?"01":"02",410,y+42,3,(selectedPackage==i)?BLACK:BLUE);
-            text(s,i==0?"PAQUETE 1":"PAQUETE 2",490,y+24,3,WHITE);
-            text(s,i==0?"1-EP0001-CUSA09303...V0100.PKG":"2-EP0001-CUSA09303...PKG",490,y+63,2,MUTED);
-            panel(s,1515,y+27,270,55,(selectedPackage==i)?BLUE:BG);
-            text(s,"PULSA X PARA INSTALAR",1530,y+48,2,(selectedPackage==i)?BLACK:BLUE);
+            int x=cardX[i];
+            Color edge=(selectedPackage==i)?BLUE:PANEL2;
+            panel(s,x,cardY,cardW,cardH,(selectedPackage==i)?PANEL2:PANEL);
+            panel(s,x,cardY,cardW,4,edge);
+
+            // Portada estilizada azul/negra de cada tarjeta.
+            panel(s,x+20,cardY+22,cardW-40,330,BG);
+            panel(s,x+20,cardY+22,cardW-40,4,BLUE_DARK);
+            panel(s,x+20,cardY+344,cardW-40,4,BLUE);
+            if (i==0) {
+                panel(s,x+60,cardY+65,210,245,{10,31,57});
+                panel(s,x+60,cardY+65,210,5,BLUE);
+                panel(s,x+60,cardY+305,210,5,BLUE_DARK);
+                text(s,"AC",x+113,cardY+132,8,BLUE);
+                text(s,"CREED",x+91,cardY+228,3,WHITE);
+                text(s,"01",x+310,cardY+105,5,BLUE);
+                text(s,"ASSASSINS",x+310,cardY+170,3,WHITE);
+                text(s,"CREED",x+310,cardY+207,3,WHITE);
+            } else {
+                panel(s,x+60,cardY+65,210,245,{8,24,43});
+                panel(s,x+60,cardY+65,210,5,BLUE_DARK);
+                panel(s,x+60,cardY+305,210,5,BLUE);
+                text(s,"AC",x+113,cardY+132,8,WHITE);
+                text(s,"CREED",x+91,cardY+228,3,BLUE);
+                text(s,"02",x+310,cardY+105,5,BLUE);
+                text(s,"ASSASSINS",x+310,cardY+170,3,WHITE);
+                text(s,"CREED",x+310,cardY+207,3,WHITE);
+            }
+
+            text(s,i==0?"ASSASSINS CREED - PAQUETE 1":"ASSASSINS CREED - PAQUETE 2",x+28,cardY+385,3,WHITE);
+            text(s,i==0?"CONTENIDO DEL TEMA  /  PARTE 1":"CONTENIDO DEL TEMA  /  PARTE 2",x+30,cardY+430,2,MUTED);
+            panel(s,x+28,cardY+470,cardW-56,2,PANEL2);
+
+            // Boton Instalar visible debajo de la portada y los detalles.
+            panel(s,x+28,cardY+510,cardW-56,74,(selectedPackage==i)?BLUE:BG);
+            panel(s,x+28,cardY+510,5,74,BLUE_DARK);
+            text(s,"INSTALAR",x+250,cardY+536,4,(selectedPackage==i)?BLACK:WHITE);
+            text(s,(selectedPackage==i)?"SELECCIONADO":"PULSA ARRIBA / ABAJO",x+30,cardY+608,2,MUTED);
         }
 
         panel(s,370,890,1470,66,PANEL);
         panel(s,370,890,5,66,BLUE);
         text(s,"ESTADO",395,914,2,MUTED);
         text(s,installStatus,520,914,2,BLUE);
-        text(s,"D-PAD: ELEGIR PAQUETE     X: INSTALAR     L1/R1: SECCIONES",372,990,2,MUTED);
+        text(s,"ARRIBA / ABAJO: ELEGIR TARJETA    X: INSTALAR    L1/R1: SECCIONES",372,990,2,MUTED);
     } else if (page==1) {
         text(s,"TU COLECCION",372,190,2,BLUE);
         panel(s,370,225,1470,230,PANEL);
@@ -305,7 +328,7 @@ static void render(Scene2D *s, int selected, int page) {
         text(s,"REVISA DESCARGAS Y NOTIFICACIONES DEL PS4",412,390,2,BLUE);
     } else {
         text(s,"AJUSTES",372,190,2,BLUE);
-        const char *settings[]={"MARKPS4 THEMES - INTERFAZ NATIVA","SIN NAVEGADOR PARA MOSTRAR LA INTERFAZ","INSTALACION BGFT SEGUN ACCESO DEL FIRMWARE"};
+        const char *settings[]={"MARKPS4 THEMES - INTERFAZ NATIVA","CATALOGO DE TEMAS EN TARJETAS","INSTALACION MEDIANTE EL SISTEMA PS4"};
         for (int i=0;i<3;i++) {
             int y=240+i*130;
             panel(s,370,y,1470,100,PANEL);
