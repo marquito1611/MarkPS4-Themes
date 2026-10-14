@@ -523,7 +523,7 @@ int main(void) {
     if (jb)
         notify("MarkPS4 Themes cannot start\n"
                "Jailbreak detected, but no payload loader answered on ports 9090, 9021 or 9020. "
-               "Start GoldHEN's BinLoader on TCP 9090, then open this again.");
+               "Start the TCP payload loader on port 9090, then open this again.");
     else
         notify("MarkPS4 Themes cannot start\n"
                "No payload loader (9090, 9021, 9020) or known FTP service answered. This does NOT prove the jailbreak "
