@@ -88,6 +88,6 @@ $(INTDIR)/common-%.o: $(COMMONDIR)/%.cpp
 
 clean:
 	rm -f $(TARGET) pkg.gp4 sce_sys/param.sfo eboot.bin \
-		$(INTDIR)/$(PROJDIR).elf $(INTDIR)/$(PROJDIR).oelf $(OBJS)
+		$(INTDIR)/$(PROJDIR).elf $(INTDIR)/$(PROJDIR).oelf $(INTDIR)/*.o
 
 .PHONY: all clean
