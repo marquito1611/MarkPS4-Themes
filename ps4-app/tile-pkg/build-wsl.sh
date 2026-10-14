@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Build the PS4 dashboard app package for PKG MUTANT SHOP.
+# Build the PS4 dashboard app package for MarkPS4 Themes.
 #
-# Produces IV0000-PKGM00001_00-PKGMUTANTSHOP001.pkg - a real, fake-signed PS4 application package
+# Produces IV0000-PKGM00001_00-MARKPS4THEMES001.pkg - a real, fake-signed PS4 application package
 # that puts the shop on the console's home screen. Installing it goes through the SAME lane as any
 # other game (our own BGFT install), because it IS an ordinary PS4 package: content type 0x1A,
 # category 'gd', and our own companion/pkg_meta.py reads it like it reads a retail title.
@@ -56,7 +56,7 @@ done
 # is what lets the icon start the shop without creating a cycle: this package carries lite, and the
 # full payload carries this package. Build order is lite -> package -> full, which is what
 # ps4-app/build-all-wsl.sh does. Handing this the FULL payload would put a package inside a package.
-PAYLOAD="$HERE/../onconsole/PKG-MUTANT-SHOP-PS4-LITE.elf"
+PAYLOAD="$HERE/../onconsole/MARKPS4-THEMES-PS4-LITE.elf"
 if [ ! -f "$PAYLOAD" ]; then
   echo "ABORT: the lite payload is not built - run ps4-app/build-all-wsl.sh." >&2
   exit 1
@@ -72,7 +72,7 @@ echo "== building"
 make clean >/dev/null 2>&1 || true
 make
 
-PKG="IV0000-PKGM00001_00-PKGMUTANTSHOP001.pkg"
+PKG="IV0000-PKGM00001_00-MARKPS4THEMES001.pkg"
 if [ ! -f "$PKG" ]; then
   echo "ABORT: no package was produced." >&2
   exit 1
