@@ -231,7 +231,7 @@ static void render(Scene2D *s, int selected, int page) {
     s->FrameBufferClear();
     s->FrameBufferFill(BG);
 
-    // Panel lateral inspirado en el diseño web original de MarkPS4.
+    // Panel lateral de la interfaz nativa MarkPS4 Themes.
     panel(s,0,0,315,H,PANEL);
     panel(s,314,0,2,H,{25,48,69});
     panel(s,0,0,6,H,BLUE);
