@@ -89,7 +89,7 @@ static int startPackageInstall(int userId, int index) {
     p.contentName = index == 0 ? "MARKPS4 THEMES AC PAQUETE 1" : "MARKPS4 THEMES AC PAQUETE 2";
     p.iconPath = "";
     p.playgoScenarioId = "0";
-    p.option = 0x10000; /* Disable CDN query parameters for a non-Store PKG. */
+    /* Leave option at zero: OpenOrbis defines this as a struct, not an integer flag. */
     p.packageType = "PS4GD";
     p.packageSubType = "";
     p.packageSize = pkg.size;
