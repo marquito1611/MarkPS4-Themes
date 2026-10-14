@@ -5,6 +5,7 @@
 #include <orbis/Pad.h>
 #include <orbis/UserService.h>
 #include <stdlib.h>
+#include <math.h>
 #include <dlfcn.h>
 #include "graphics.h"
 #include "theme_packages.h"
