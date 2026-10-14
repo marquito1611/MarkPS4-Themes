@@ -1,8 +1,16 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
-<defs><linearGradient id="b" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#59f7ff"/><stop offset=".55" stop-color="#167dff"/><stop offset="1" stop-color="#6c43ff"/></linearGradient><filter id="g"><feGaussianBlur stdDeviation="7" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
-<rect width="512" height="512" rx="78" fill="#070b14"/><path d="M40 120 H472 M40 392 H472" stroke="#12335b" stroke-width="3"/><path d="M60 256 L100 216 M412 296 L452 256" stroke="#1a8dff" stroke-width="5"/>
-<path d="M110 142 L256 84 L402 142 L402 352 L256 428 L110 352 Z" fill="#0b1527" stroke="url(#b)" stroke-width="10" filter="url(#g)"/>
-<text x="256" y="244" font-family="Arial, Helvetica, sans-serif" font-size="90" font-weight="900" text-anchor="middle" fill="#fff" letter-spacing="-5">M4</text>
-<path d="M154 270 H358" stroke="url(#b)" stroke-width="8"/><text x="256" y="326" font-family="Arial, Helvetica, sans-serif" font-size="37" font-weight="900" text-anchor="middle" fill="url(#b)" letter-spacing="5">THEMES</text>
-<g fill="#e9fbff"><circle cx="190" cy="372" r="7"/><circle cx="214" cy="372" r="7"/><circle cx="298" cy="372" r="7"/><circle cx="322" cy="372" r="7"/></g>
+<defs>
+  <linearGradient id="blue" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#55f4ff"/><stop offset=".52" stop-color="#168cff"/><stop offset="1" stop-color="#584cff"/></linearGradient>
+  <linearGradient id="silver" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#ffffff"/><stop offset="1" stop-color="#a8c6e8"/></linearGradient>
+  <filter id="glow" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="5" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+</defs>
+<rect width="512" height="512" rx="70" fill="#070b14"/>
+<path d="M26 112H486M26 400H486" stroke="#173b62" stroke-width="3"/>
+<path d="M36 146L102 80M410 432L476 366" stroke="url(#blue)" stroke-width="7"/>
+<path d="M256 58L426 128V302L256 382L86 302V128Z" fill="#0b1424" stroke="url(#blue)" stroke-width="7" filter="url(#glow)"/>
+<text x="256" y="204" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="49" font-weight="900" letter-spacing="-1" fill="url(#silver)">MarkPS4</text>
+<path d="M125 224H387" stroke="url(#blue)" stroke-width="5"/>
+<text x="256" y="279" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="43" font-weight="900" letter-spacing="5" fill="#ffffff">THEMES</text>
+<text x="256" y="318" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="13" font-weight="700" letter-spacing="4" fill="#80b8e9">PLAYSTATION CUSTOMIZATION</text>
+<g fill="#55f4ff"><circle cx="220" cy="352" r="5"/><circle cx="244" cy="352" r="5"/><circle cx="268" cy="352" r="5"/><circle cx="292" cy="352" r="5"/></g>
 </svg>
