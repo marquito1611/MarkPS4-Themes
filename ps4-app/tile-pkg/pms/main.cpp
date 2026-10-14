@@ -6,7 +6,7 @@
 #include <orbis/UserService.h>
 #include <stdlib.h>
 #include <math.h>
-#include <dlfcn.h>
+#include <orbis/Bgft.h>
 #include "graphics.h"
 #include "theme_packages.h"
 #include "assassins_creed_image.h"
@@ -17,36 +17,13 @@
 std::stringstream debugLogStream;
 static int frameID = 0;
 
-typedef int32_t BgftTaskId;
-typedef struct { void *heap; size_t heapSize; } BgftInitParams;
-typedef struct {
-    int32_t userId, entitlementType;
-    const char *id, *contentUrl, *contentExUrl, *contentName, *iconPath, *skuId;
-    int32_t option;
-    const char *playgoScenarioId, *releaseDate, *packageType, *packageSubType;
-    uint32_t packageSize;
-} BgftDownloadParam;
-typedef int32_t (*BgftInitFn)(BgftInitParams *);
-typedef int32_t (*BgftRegisterFn)(BgftDownloadParam *, BgftTaskId *);
-typedef int32_t (*BgftStartFn)(BgftTaskId);
-typedef int32_t (*BgftStopFn)(BgftTaskId);
-typedef int32_t (*BgftUnregisterFn)(BgftTaskId);
-typedef struct {
-    uint32_t bits; int32_t errorResult; uint32_t length; uint32_t transferred;
-    uint32_t lengthTotal; uint32_t transferredTotal; uint32_t numIndex; uint32_t numTotal;
-    uint32_t restSec; uint32_t restSecTotal; int32_t preparingPercent; int32_t localCopyPercent;
-} BgftTaskProgress;
-typedef int32_t (*BgftProgressFn)(BgftTaskId, BgftTaskProgress *);
-static BgftInitFn bgftInit = NULL;
-static BgftRegisterFn bgftRegister = NULL;
-static BgftStartFn bgftStart = NULL;
-static BgftStopFn bgftStop = NULL;
-static BgftUnregisterFn bgftUnregister = NULL;
-static BgftProgressFn bgftProgress = NULL;
+typedef OrbisBgftTaskId BgftTaskId;
+typedef OrbisBgftInitParams BgftInitParams;
+typedef OrbisBgftDownloadParam BgftDownloadParam;
+typedef OrbisBgftTaskProgress BgftTaskProgress;
+
 static BgftTaskId lastTask = -1;
 static int lastPackageIndex = -1;
-static void *bgftLib = NULL;
-static void *bgftHeap = NULL;
 static int bgftReady = 0;
 static char installStatus[96] = "LISTO PARA INSTALAR";
 static int selectedPackage = 0;
@@ -65,29 +42,7 @@ static int startPackageInstall(int userId, int index) {
         return -1;
     }
     if (!bgftReady) {
-        typedef int (*LoadModuleFn)(const char *, size_t, const void *, uint32_t, void *, int *);
-        LoadModuleFn loadModule = (LoadModuleFn)dlsym(RTLD_DEFAULT, "sceKernelLoadStartModule");
-        if (loadModule) {
-            int moduleResult = 0;
-            (void)loadModule("/system/common/lib/libSceBgft.sprx", 0, NULL, 0, NULL, &moduleResult);
-        }
-        const char *libs[] = {"/system/common/lib/libSceBgft.sprx", NULL};
-        for (int i=0; libs[i]; ++i) {
-            bgftLib = dlopen(libs[i], RTLD_LAZY | RTLD_GLOBAL);
-            if (bgftLib) break;
-        }
-        if (bgftLib) {
-            bgftInit = (BgftInitFn)dlsym(bgftLib, "sceBgftServiceIntInit");
-            bgftRegister = (BgftRegisterFn)dlsym(bgftLib, "sceBgftServiceIntDebugDownloadRegisterPkg");
-            bgftStart = (BgftStartFn)dlsym(bgftLib, "sceBgftServiceIntDownloadStartTask");
-            bgftStop = (BgftStopFn)dlsym(bgftLib, "sceBgftServiceIntDownloadStopTask");
-            bgftUnregister = (BgftUnregisterFn)dlsym(bgftLib, "sceBgftServiceIntDownloadUnregisterTask");
-            bgftProgress = (BgftProgressFn)dlsym(bgftLib, "sceBgftServiceIntDownloadGetProgress");
-        }
-        if (!bgftInit || !bgftRegister || !bgftStart || !bgftProgress || !bgftStop || !bgftUnregister) {
-            snprintf(installStatus, sizeof(installStatus), "BGFT NO ACCESIBLE DESDE ESTA APP");
-            return -2;
-        }
+        static void *bgftHeap = NULL;
         bgftHeap = malloc(1024 * 1024);
         if (!bgftHeap) {
             snprintf(installStatus, sizeof(installStatus), "SIN MEMORIA PARA INSTALADOR");
@@ -95,10 +50,11 @@ static int startPackageInstall(int userId, int index) {
         }
         memset(bgftHeap, 0, 1024 * 1024);
         BgftInitParams init = { bgftHeap, 1024 * 1024 };
-        int rc = bgftInit(&init);
-        /* BGFT can already be initialized by the system or another trusted component. */
+        int rc = sceBgftServiceIntInit(&init);
         if (rc != 0 && (uint32_t)rc != 0x80990001u) {
-            snprintf(installStatus, sizeof(installStatus), "BGFT NO INICIO");
+            snprintf(installStatus, sizeof(installStatus), "BGFT NO INICIO: %08X", (unsigned)rc);
+            free(bgftHeap);
+            bgftHeap = NULL;
             return rc;
         }
         bgftReady = 1;
@@ -110,7 +66,7 @@ static int startPackageInstall(int userId, int index) {
     if (lastTask >= 0 && lastPackageIndex != index) {
         BgftTaskProgress progress;
         memset(&progress, 0, sizeof(progress));
-        int progressRc = bgftProgress(lastTask, &progress);
+        int progressRc = sceBgftServiceIntDownloadGetProgress(lastTask, &progress);
         if (progressRc == 0 && progress.lengthTotal > 0 &&
             progress.transferredTotal < progress.lengthTotal) {
             snprintf(installStatus, sizeof(installStatus), "ESPERA A QUE TERMINE EL PAQUETE ANTERIOR");
@@ -118,8 +74,8 @@ static int startPackageInstall(int userId, int index) {
         }
         /* Only reach here when the previous transfer reports all bytes or BGFT no longer reports it.
            The owner should press X for package 2 only after the PS4 confirms package 1 installed. */
-        (void)bgftStop(lastTask);
-        (void)bgftUnregister(lastTask);
+        (void)sceBgftServiceIntDownloadStopTask(lastTask);
+        (void)sceBgftServiceIntDownloadUnregisterTask(lastTask);
         lastTask = -1;
         lastPackageIndex = -1;
     }
@@ -138,12 +94,12 @@ static int startPackageInstall(int userId, int index) {
     p.packageSubType = "";
     p.packageSize = pkg.size;
     BgftTaskId task = -1;
-    int rc = bgftRegister(&p, &task);
+    int rc = sceBgftServiceIntDebugDownloadRegisterPkg(&p, &task);
     if (rc != 0) {
         snprintf(installStatus, sizeof(installStatus), "PS4 RECHAZO EL PAQUETE");
         return rc;
     }
-    rc = bgftStart(task);
+    rc = sceBgftServiceIntDownloadStartTask(task);
     if (rc != 0) {
         snprintf(installStatus, sizeof(installStatus), "NO SE PUDO INICIAR DESCARGA");
         return rc;
@@ -170,10 +126,10 @@ static int startThemeInstall(int userId) {
 }
 
 static void advanceQueuedInstall(int userId) {
-    if (!autoInstallSecond || lastTask < 0 || lastPackageIndex != 0 || !bgftProgress) return;
+    if (!autoInstallSecond || lastTask < 0 || lastPackageIndex != 0 || !bgftReady) return;
     BgftTaskProgress progress;
     memset(&progress, 0, sizeof(progress));
-    int rc = bgftProgress(lastTask, &progress);
+    int rc = sceBgftServiceIntDownloadGetProgress(lastTask, &progress);
     if (rc == 0 && progress.lengthTotal > 0 &&
         progress.transferredTotal >= progress.lengthTotal) {
         autoInstallSecond = false;
