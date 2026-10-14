@@ -70,7 +70,7 @@ jobs:
               if len(cid) < 20 or "-" not in cid or "_" not in cid:
                   raise SystemExit(f"Could not read content ID from package {n}: {cid!r}")
               out += [
-                  f'#define MARKPS4_PKG{n}_URL "https://drive.google.com/uc?export=download&id={drive_id}"',
+                  f'#define MARKPS4_PKG{n}_URL "https://drive.google.com/uc?export=download&id={drive_id}&confirm=t"',
                   f'#define MARKPS4_PKG{n}_CONTENT_ID "{cid}"',
                   f"#define MARKPS4_PKG{n}_SIZE {len(data)}u",
               ]
