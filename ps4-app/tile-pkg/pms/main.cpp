@@ -153,6 +153,8 @@ int main() {
         for (;;) sceKernelUsleep(1000000);
     }
 
+    scene->SetActiveFrameBuffer(0);
+
     int userID = -1;
     OrbisUserServiceInitializeParams params;
     memset(&params, 0, sizeof(params));
