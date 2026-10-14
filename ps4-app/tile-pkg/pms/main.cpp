@@ -8,6 +8,7 @@
 #include <dlfcn.h>
 #include "graphics.h"
 #include "theme_packages.h"
+#include "assassins_creed_image.h"
 
 #define W 1920
 #define H 1080
@@ -48,6 +49,7 @@ static void *bgftHeap = NULL;
 static int bgftReady = 0;
 static char installStatus[96] = "LISTO PARA INSTALAR";
 static int selectedPackage = 0;
+static bool autoInstallSecond = false;
 
 struct ThemePackage { const char *label; const char *url; const char *contentId; uint32_t size; };
 static ThemePackage packages[2] = {
@@ -149,6 +151,38 @@ static int startPackageInstall(int userId, int index) {
     lastPackageIndex = index;
     snprintf(installStatus, sizeof(installStatus), "ENVIADO A DESCARGAS DEL PS4");
     return 0;
+}
+
+
+/* One catalog button represents the complete Assassin's Creed theme (both linked PKGs). */
+static int startThemeInstall(int userId) {
+    if (autoInstallSecond) {
+        snprintf(installStatus, sizeof(installStatus), "INSTALACION DEL TEMA EN CURSO");
+        return -1;
+    }
+    int rc = startPackageInstall(userId, 0);
+    if (rc == 0) {
+        autoInstallSecond = true;
+        snprintf(installStatus, sizeof(installStatus), "PARTE 1 EN DESCARGAS; PARTE 2 AUTOMATICA");
+    }
+    return rc;
+}
+
+static void advanceQueuedInstall(int userId) {
+    if (!autoInstallSecond || lastTask < 0 || lastPackageIndex != 0 || !bgftProgress) return;
+    BgftTaskProgress progress;
+    memset(&progress, 0, sizeof(progress));
+    int rc = bgftProgress(lastTask, &progress);
+    if (rc == 0 && progress.lengthTotal > 0 &&
+        progress.transferredTotal >= progress.lengthTotal) {
+        autoInstallSecond = false;
+        int nextRc = startPackageInstall(userId, 1);
+        if (nextRc == 0) {
+            snprintf(installStatus, sizeof(installStatus), "PARTE 2 ENVIADA; TEMA COMPLETO");
+        } else {
+            snprintf(installStatus, sizeof(installStatus), "PARTE 1 LISTA; ERROR AL ENVIAR PARTE 2");
+        }
+    }
 }
 
 static const Color BG       = { 8, 11, 18 };       // #080b12
@@ -269,56 +303,29 @@ static void render(Scene2D *s, int selected, int page) {
     panel(s,370,150,1470,2,PANEL2);
 
     if (page==0) {
-        // Dos tarjetas grandes. El arte se dibuja con primitivas nativas para
-        // que el catalogo no dependa de una pagina web ni de recursos remotos.
-        const int cardX[2]={370,1120};
-        const int cardW=700, cardY=190, cardH=660;
-        for (int i=0;i<2;i++) {
-            int x=cardX[i];
-            Color edge=(selectedPackage==i)?BLUE:PANEL2;
-            panel(s,x,cardY,cardW,cardH,(selectedPackage==i)?PANEL2:PANEL);
-            panel(s,x,cardY,cardW,4,edge);
-
-            // Portada estilizada azul/negra de cada tarjeta.
-            panel(s,x+20,cardY+22,cardW-40,330,BG);
-            panel(s,x+20,cardY+22,cardW-40,4,BLUE_DARK);
-            panel(s,x+20,cardY+344,cardW-40,4,BLUE);
-            if (i==0) {
-                panel(s,x+60,cardY+65,210,245,{10,31,57});
-                panel(s,x+60,cardY+65,210,5,BLUE);
-                panel(s,x+60,cardY+305,210,5,BLUE_DARK);
-                text(s,"AC",x+113,cardY+132,8,BLUE);
-                text(s,"CREED",x+91,cardY+228,3,WHITE);
-                text(s,"01",x+310,cardY+105,5,BLUE);
-                text(s,"ASSASSINS",x+310,cardY+170,3,WHITE);
-                text(s,"CREED",x+310,cardY+207,3,WHITE);
-            } else {
-                panel(s,x+60,cardY+65,210,245,{8,24,43});
-                panel(s,x+60,cardY+65,210,5,BLUE_DARK);
-                panel(s,x+60,cardY+305,210,5,BLUE);
-                text(s,"AC",x+113,cardY+132,8,WHITE);
-                text(s,"CREED",x+91,cardY+228,3,BLUE);
-                text(s,"02",x+310,cardY+105,5,BLUE);
-                text(s,"ASSASSINS",x+310,cardY+170,3,WHITE);
-                text(s,"CREED",x+310,cardY+207,3,WHITE);
-            }
-
-            text(s,i==0?"ASSASSINS CREED - PAQUETE 1":"ASSASSINS CREED - PAQUETE 2",x+28,cardY+385,3,WHITE);
-            text(s,i==0?"CONTENIDO DEL TEMA  /  PARTE 1":"CONTENIDO DEL TEMA  /  PARTE 2",x+30,cardY+430,2,MUTED);
-            panel(s,x+28,cardY+470,cardW-56,2,PANEL2);
-
-            // Boton Instalar visible debajo de la portada y los detalles.
-            panel(s,x+28,cardY+510,cardW-56,74,(selectedPackage==i)?BLUE:BG);
-            panel(s,x+28,cardY+510,5,74,BLUE_DARK);
-            text(s,"INSTALAR",x+250,cardY+536,4,(selectedPackage==i)?BLACK:WHITE);
-            text(s,(selectedPackage==i)?"SELECCIONADO":"PULSA ARRIBA / ABAJO",x+30,cardY+608,2,MUTED);
-        }
+        // Una sola tarjeta para el tema Assassin's Creed; sus dos PKG se gestionan con un boton.
+        const int x=370, cardY=190, cardW=1470, cardH=660;
+        panel(s,x,cardY,cardW,cardH,PANEL);
+        panel(s,x,cardY,cardW,4,BLUE);
+        panel(s,x+20,cardY+22,500,330,BG);
+        s->DrawRGBImage(x+20,cardY+22,500,330,kAssassinsCreedRGB,240,165);
+        panel(s,x+20,cardY+348,500,4,BLUE);
+        text(s,"ASSASSIN'S CREED",x+555,cardY+70,5,WHITE);
+        text(s,"TEMA COMPLETO",x+558,cardY+135,3,BLUE);
+        text(s,"INCLUYE LOS DOS PAQUETES DE DESCARGA",x+558,cardY+190,2,MUTED);
+        text(s,"LAS DOS PARTES SE ENVIAN DESDE UN SOLO BOTON",x+558,cardY+230,2,MUTED);
+        panel(s,x+555,cardY+280,850,2,PANEL2);
+        panel(s,x+555,cardY+320,850,82,BLUE);
+        panel(s,x+555,cardY+320,5,82,BLUE_DARK);
+        text(s,"INSTALAR TEMA COMPLETO",x+730,cardY+349,4,BLACK);
+        text(s,"PULSA X PARA INICIAR AMBAS PARTES",x+558,cardY+435,2,MUTED);
+        text(s,"PAQUETE 1 + PAQUETE 2",x+558,cardY+475,2,BLUE);
 
         panel(s,370,890,1470,66,PANEL);
         panel(s,370,890,5,66,BLUE);
         text(s,"ESTADO",395,914,2,MUTED);
         text(s,installStatus,520,914,2,BLUE);
-        text(s,"ARRIBA / ABAJO: ELEGIR TARJETA    X: INSTALAR    L1/R1: SECCIONES",372,990,2,MUTED);
+        text(s,"X: INSTALAR TEMA COMPLETO    L1/R1: SECCIONES",372,990,2,MUTED);
     } else if (page==1) {
         text(s,"TU COLECCION",372,190,2,BLUE);
         panel(s,370,225,1470,230,PANEL);
@@ -372,19 +379,16 @@ int main() {
             if (scePadReadState(pad, &data) == 0) {
                 uint32_t now = data.buttons;
                 uint32_t pressed = now & ~previous;
-                if (pressed & ORBIS_PAD_BUTTON_LEFT) selectedPackage = (selectedPackage + 1) % 2;
-                if (pressed & ORBIS_PAD_BUTTON_RIGHT) selectedPackage = (selectedPackage + 1) % 2;
-                if (pressed & ORBIS_PAD_BUTTON_UP) selectedPackage = (selectedPackage + 1) % 2;
-                if (pressed & ORBIS_PAD_BUTTON_DOWN) selectedPackage = (selectedPackage + 1) % 2;
                 if (pressed & ORBIS_PAD_BUTTON_L1) page = (page + 2) % 3;
                 if (pressed & ORBIS_PAD_BUTTON_R1) page = (page + 1) % 3;
                 if (pressed & ORBIS_PAD_BUTTON_CROSS) {
-                    startPackageInstall(userID, selectedPackage);
+                    startThemeInstall(userID);
                 }
                 if (pressed & ORBIS_PAD_BUTTON_CIRCLE) page = 0;
                 previous = now;
             }
         }
+        advanceQueuedInstall(userID);
         render(scene, selected, page);
         sceKernelUsleep(16000);
     }
