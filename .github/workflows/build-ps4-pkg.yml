@@ -32,6 +32,23 @@ jobs:
           ln -sfn /usr/bin/ld.lld-18 "$HOME/bin/ld.lld"
           echo "$HOME/bin" >> "$GITHUB_PATH"
 
+      - name: Install OpenOrbis PS4 toolchain
+        run: |
+          set -euo pipefail
+          TOOLROOT="$HOME/ps4tool"
+          TOOLCHAIN="$TOOLROOT/OpenOrbis/OpenOrbis/PS4Toolchain"
+          if [ ! -x "$TOOLCHAIN/bin/linux/create-fself" ]; then
+            mkdir -p "$TOOLROOT/OpenOrbis"
+            curl -fL --retry 3 --retry-delay 2 \
+              -o "$TOOLROOT/toolchain.tar.gz" \
+              "https://github.com/OpenOrbis/OpenOrbis-PS4-Toolchain/releases/download/v0.5.4/toolchain-llvm-18.tar.gz"
+            tar -tzf "$TOOLROOT/toolchain.tar.gz" | head -n 5
+            tar xzf "$TOOLROOT/toolchain.tar.gz" -C "$TOOLROOT/OpenOrbis"
+            chmod +x "$TOOLCHAIN"/bin/linux/* || true
+          fi
+          test -x "$TOOLCHAIN/bin/linux/create-fself"
+          test -f "$TOOLCHAIN/lib/crtlib.o"
+
       - name: Build PS4 payloads and PKG
         run: |
           export PATH="$HOME/clang18/usr/lib/llvm-18/bin:$HOME/bin:$PATH"
