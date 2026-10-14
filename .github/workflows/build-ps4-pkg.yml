@@ -54,6 +54,63 @@ jobs:
           test -x "$TOOLCHAIN/bin/linux/create-fself"
           test -f "$TOOLCHAIN/lib/crtlib.o"
 
+      - name: Prepare Assassin's Creed artwork for the native interface
+        run: |
+          set -euo pipefail
+          convert ps4-app/tile-pkg/assets/assassins-creed.jpg \
+            -resize 240x165^ -gravity center -extent 240x165 -depth 8 RGB:/tmp/assassins-creed.rgb
+          python3 - <<'PY'
+          from pathlib import Path
+          raw = Path("/tmp/assassins-creed.rgb").read_bytes()
+          expected = 240 * 165 * 3
+          if len(raw) != expected:
+              raise SystemExit(f"Unexpected cover data size: {len(raw)} != {expected}")
+          lines = []
+          for i in range(0, len(raw), 24):
+              lines.append("    " + ", ".join(str(v) for v in raw[i:i+24]) + ",")
+          header = "#pragma once\\n#include <stdint.h>\\nstatic const uint8_t kAssassinsCreedRGB[] = {\\n" + "\\n".join(lines) + "\\n};\\n"
+          Path("ps4-app/tile-pkg/pms/assassins_creed_image.h").write_text(header)
+          PY
+          COMMONDIR="$HOME/ps4tool/OpenOrbis/OpenOrbis/PS4Toolchain/samples/_common"
+          python3 - "$COMMONDIR/graphics.h" "$COMMONDIR/graphics.cpp" <<'PY'
+          from pathlib import Path
+          import sys
+          header_path, source_path = map(Path, sys.argv[1:])
+          header = header_path.read_text()
+          declaration = "void DrawRectangle(int x, int y, int w, int h, Color color);"
+          if "DrawRGBImage(" not in header:
+              if declaration not in header:
+                  raise SystemExit("Could not find Scene2D DrawRectangle declaration")
+              header = header.replace(declaration, declaration + "\\n\\tvoid DrawRGBImage(int x, int y, int w, int h, const uint8_t *rgb, int imageW, int imageH);")
+              header_path.write_text(header)
+          source = source_path.read_text()
+          marker = "#ifdef GRAPHICS_USES_FONT\\nvoid Scene2D::DrawText"
+          method = """void Scene2D::DrawRGBImage(int x, int y, int w, int h, const uint8_t *rgb, int imageW, int imageH)
+          {
+              if (!rgb || w <= 0 || h <= 0 || imageW <= 0 || imageH <= 0) return;
+              uint32_t *fb = (uint32_t *)this->frameBuffers[this->activeFrameBufferIdx];
+              for (int dy = 0; dy < h; ++dy) {
+                  int py = y + dy;
+                  if (py < 0 || py >= this->height) continue;
+                  int sy = (dy * imageH) / h;
+                  for (int dx = 0; dx < w; ++dx) {
+                      int px = x + dx;
+                      if (px < 0 || px >= this->width) continue;
+                      int sx = (dx * imageW) / w;
+                      const uint8_t *p = rgb + ((sy * imageW + sx) * 3);
+                      fb[py * this->width + px] = 0x80000000u | ((uint32_t)p[0] << 16) | ((uint32_t)p[1] << 8) | p[2];
+                  }
+              }
+          }
+
+          """
+          if "Scene2D::DrawRGBImage(" not in source:
+              if marker not in source:
+                  raise SystemExit("Could not find graphics.cpp insertion point")
+              source = source.replace(marker, method + marker, 1)
+              source_path.write_text(source)
+          PY
+
       - name: Download Assassin's Creed PKGs and generate metadata
         run: |
           set -euo pipefail
