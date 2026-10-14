@@ -1,4 +1,4 @@
-# PKG MUTANT SHOP 3.94.0 - setup and runbook
+# MarkPS4 Themes 3.94.0 - setup and runbook
 
 This is the one current document for installing, running, updating and triaging the app. Every
 sentence in it was read out of the code as it is today (`companion/server.py`,
@@ -10,9 +10,9 @@ Three artifacts, nothing else:
 
 | Artifact | Runs on | What it is |
 |---|---|---|
-| `PKG-MUTANT-SHOP.exe` | a Windows PC | the companion: scans your game folder, serves the packages over HTTP, runs the install queue, serves the UI |
-| `PKG-MUTANT-SHOP.elf` | the PS5 (jailbroken, firmware up to 13.60) | the on-console server on `:8710`: the UI, the install engine, the cheat engine, the dashboard tile, and the helpers it carries inside itself |
-| `PKG-MUTANT-SHOP-PS4.elf` | the PS4 (FW 13.52, GoldHEN) | the same server and the same UI on `:8710`, plus the home-screen application it installs itself |
+| `MARKPS4-THEMES.exe` | a Windows PC | the companion: scans your game folder, serves the packages over HTTP, runs the install queue, serves the UI |
+| `MARKPS4-THEMES.elf` | the PS5 (jailbroken, firmware up to 13.60) | the on-console server on `:8710`: the UI, the install engine, the cheat engine, the dashboard tile, and the helpers it carries inside itself |
+| `MARKPS4-THEMES-PS4.elf` | the PS4 (FW 13.52, GoldHEN) | the same server and the same UI on `:8710`, plus the home-screen application it installs itself |
 
 Nothing has to be downloaded separately. Each ELF embeds the UI, the helper payloads, the homebrew
 catalogue and the whole cheat/patch library; the PS5's also carries ShadowMountPlus, its own
@@ -28,10 +28,10 @@ there. Nothing has to be created by hand.
 
 ### 1.1 Files
 
-Put `PKG-MUTANT-SHOP.exe` in a folder of its own. It reads and writes **beside itself**:
+Put `MARKPS4-THEMES.exe` in a folder of its own. It reads and writes **beside itself**:
 
 ```
-PKG-MUTANT-SHOP.exe
+MARKPS4-THEMES.exe
 config.json          settings - created and rewritten by the app (auto-found console, Settings panel)
 installed.json       what it has confirmed installed
 pms.log              the companion's log (rotated)
@@ -45,8 +45,8 @@ on defaults and writes a fresh `config.json` next to itself.
 ### 1.2 The games folder
 
 ```
-C:\Mutant Games\PS4\    PS4 packages (.pkg) - base games, updates, DLC
-C:\Mutant Games\PS5\    PS5 packages (.pkg) and PS5 backups (.ffpfsc / .ffpkg / .ffpfs / .exfat)
+C:\MarkPS4 Library\PS4\    PS4 packages (.pkg) - base games, updates, DLC
+C:\MarkPS4 Library\PS5\    PS5 packages (.pkg) and PS5 backups (.ffpfsc / .ffpkg / .ffpfs / .exfat)
 ```
 
 The app creates this tree on first start and always scans it; it is inserted at the front of
@@ -68,7 +68,7 @@ not, the console reports `0x80B22404` on every install: it could not fetch the f
 
 Double-click the exe. It
 
-1. creates `C:\Mutant Games\PS4|PS5` if missing and scans the library,
+1. creates `C:\MarkPS4 Library\PS4|PS5` if missing and scans the library,
 2. looks for the PS5: the saved `ps5_ip`, else a sweep of the local `/24` asking each host's
    `:8710/api/health` for `on_console:true` (a host that will not confirm it is a console is used for
    this run only and never saved),
@@ -83,7 +83,7 @@ and creates `companion/config.json` from `config.example.json` the first time.
 
 ### 1.5 A second PC (federation)
 
-Run the exe on the other PC with its own `C:\Mutant Games`. Nothing to configure: each companion
+Run the exe on the other PC with its own `C:\MarkPS4 Library`. Nothing to configure: each companion
 sweeps the LAN for others at start and every five minutes, and re-checks the ones it knows every
 20 s. The library you see is the union, deduplicated by title id, and a game that lives on the other
 PC is installed by the console **straight from that PC** - nothing is proxied. A PC on another
@@ -99,7 +99,7 @@ The console page picks, among all PCs announcing themselves, the newest build fi
 | `ftp.port` | `2121` | first FTP port tried; 1337 is tried next and whichever answers is remembered. FTP is optional - only `deploy.py elf` and a few diagnostics use it |
 | `shadowmount.port` | `10101` | where ShadowMountPlus reports (loopback-only on the console; the PC only relays what the ELF says). **Not 9021** - that is elfldr |
 | `shadowmount.scan_path` | `/data/homebrew` | where a backup sent to "internal" lands; other drives are `/mnt/<drive>/homebrew` |
-| `library.local_paths` | `["C:\\Mutant Games"]` | folders scanned |
+| `library.local_paths` | `["C:\\MarkPS4 Library"]` | folders scanned |
 | `queue.max_parallel` | `2` | transfers in flight across consoles; per console it is always one at a time |
 | `companion.host` / `port` | `0.0.0.0` / `8710` | keep `0.0.0.0` - the console has to reach it |
 | `integrity.on_local_corrupt` | `"warn"` | `"block"` refuses to hand over a package whose PFS image does not fit |
@@ -125,12 +125,12 @@ Nothing else needs to be, or should be, running: no DPI host, no install daemon,
 
 ### 2.1b If the console is a PS4
 
-A PS4 on 13.52 needs its own payload, `PKG-MUTANT-SHOP-PS4.elf` - the PS5 one will not run there,
+A PS4 on 13.52 needs its own payload, `MARKPS4-THEMES-PS4.elf` - the PS5 one will not run there,
 and the jailbreak's loader accepts it and then does nothing, which looks like a crash but is simply
 the wrong machine. Post it to the loader the jailbreak provides:
 
 ```
-curl -X POST --data-binary @PKG-MUTANT-SHOP-PS4.elf http://<ps4>:9090/
+curl -X POST --data-binary @MARKPS4-THEMES-PS4.elf http://<ps4>:9090/
 ```
 
 Wait about twelve seconds, then `http://<ps4>:8710/api/health` should answer with
@@ -150,8 +150,8 @@ this app does not reach into the PS4's jailbreak.
 The PS4's home-screen app is a real PS4 application that puts the shop on the console's home
 screen, so it opens from an icon instead of only existing while a payload is loaded.
 
-**It is not a file you download.** There are three artefacts and no more: `PKG-MUTANT-SHOP.exe`,
-`PKG-MUTANT-SHOP.elf` for the PS5 and `PKG-MUTANT-SHOP-PS4.elf` for the PS4. The application's
+**It is not a file you download.** There are three artefacts and no more: `MARKPS4-THEMES.exe`,
+`MARKPS4-THEMES.elf` for the PS5 and `MARKPS4-THEMES-PS4.elf` for the PS4. The application's
 package is carried *inside* both the PS4 ELF and the exe, so whichever of them is running can put
 the icon on the console without anything else being present.
 
@@ -168,7 +168,7 @@ Pressing the icon starts the shop by handing the payload it carries to the jailb
 power cycle, run the jailbreak again and then press the icon.
 
 To rebuild it: `bash ps4-app/tile-pkg/build-wsl.sh` (fetches the OpenOrbis PS4 toolchain on first
-run). It embeds whatever `ps4-app/onconsole/PKG-MUTANT-SHOP-PS4.elf` currently is, so build the
+run). It embeds whatever `ps4-app/onconsole/MARKPS4-THEMES-PS4.elf` currently is, so build the
 payload first.
 
 ### 2.2 Loading the shop
@@ -176,12 +176,12 @@ payload first.
 The registered path Payload Manager runs is
 
 ```
-/data/pldmgr/payloads/PKG-MUTANT-SHOP/PKG-MUTANT-SHOP.elf
+/data/pldmgr/payloads/MARKPS4-THEMES/MARKPS4-THEMES.elf
 ```
 
 Put the ELF there (FTP, uploaded as `.part` and renamed, or let `python companion/deploy.py elf` do
 it - section 5), then load it from Payload Manager's page or with
-`GET http://<ps5>:8084/loadpayload:/data/pldmgr/payloads/PKG-MUTANT-SHOP/PKG-MUTANT-SHOP.elf`.
+`GET http://<ps5>:8084/loadpayload:/data/pldmgr/payloads/MARKPS4-THEMES/MARKPS4-THEMES.elf`.
 Payload Manager resolves `/loadpayload:` **by basename against its own registered copy**, so that
 exact file is the one that has to be replaced - a copy uploaded anywhere else loads the old build
 and says OK.
@@ -195,29 +195,29 @@ In this order:
 
 1. raises its own credentials (root, sandbox escape) so `/data`, `/mnt/ext1` and the system
    databases are reachable;
-2. writes the embedded UI to `/data/pkg-mutant-shop/web` (every boot, so a new ELF is a new UI);
-3. starts extracting the cheat/patch library to `/data/pkg-mutant-shop/cheats` (several thousand
+2. writes the embedded UI to `/data/MARKPS4-THEMES/web` (every boot, so a new ELF is a new UI);
+3. starts extracting the cheat/patch library to `/data/MARKPS4-THEMES/cheats` (several thousand
    files on the first boot; later boots write only what is missing);
 4. binds `:8710`. If an older copy of the shop still owns the port it asks it to quit
    (`/api/quit`) and takes over;
-5. toasts **"PKG MUTANT SHOP v<version> is ready - Open it from Media, or <ip>:8710 in any browser"**.
+5. toasts **"MarkPS4 Themes v<version> is ready - Open it from Media, or <ip>:8710 in any browser"**.
    From this moment installs are possible: the engine needs nothing running beforehand;
 6. in the background: if the dashboard tile is missing it installs `pms-tile.pkg` (embedded; written
-   to `/data/pkg-mutant-shop/pms-tile.pkg` and handed to the console's own installer) - the tile
+   to `/data/MARKPS4-THEMES/pms-tile.pkg` and handed to the console's own installer) - the tile
    appears under **Media** with no reboot;
-7. still in the background, after a delay (`/data/pkg-mutant-shop/autostart-delay`, seconds,
+7. still in the background, after a delay (`/data/MARKPS4-THEMES/autostart-delay`, seconds,
    default 30, max 600), once Payload Manager answers and a user is signed in: writes its helper
-   payloads to `/data/pkg-mutant-shop/payloads/` and starts the two that are marked to auto-start:
+   payloads to `/data/MARKPS4-THEMES/payloads/` and starts the two that are marked to auto-start:
    **ShadowMountPlus** (`shadowmountplus.elf`, only if nothing answers on `:10101` yet) and the
    **FTP server** (`ftpsrv.elf`, only if nothing answers on `:2121`). The other six are written and
    left alone - `pms-installer.elf` is spawned per install, and kstuff, OnionHEN and the WebKit
    autoloader change the jailbreak layer, which is the owner's call and never a side effect.
-   Create `/data/pkg-mutant-shop/no-autostart` to skip this step entirely.
+   Create `/data/MARKPS4-THEMES/no-autostart` to skip this step entirely.
 
 ### 2.4 Where things live on the console
 
 ```
-/data/pkg-mutant-shop/
+/data/MARKPS4-THEMES/
     web/                     the UI (rewritten every boot)
     cheats/                  json/ mc4/ shn/ patches/ ... - the cheat and patch library
     payloads/                the eight helper payloads the ELF carries (rewritten every boot)
@@ -229,7 +229,7 @@ In this order:
     power.log                suspend/resume observations
     no-autostart             flag: do not start helpers
     autostart-delay          flag: seconds to wait before starting helpers
-/data/pldmgr/payloads/PKG-MUTANT-SHOP/PKG-MUTANT-SHOP.elf     what Payload Manager runs
+/data/pldmgr/payloads/MARKPS4-THEMES/MARKPS4-THEMES.elf     what Payload Manager runs
 /data/pldmgr/payloads/pms-installer/pms-installer.elf        our installer, written per install
 /data/homebrew, /mnt/<drive>/homebrew                        ShadowMount watch folders (backups)
 /system_data/priv/mms/bgft.db                                the installer's own ledger (proof - section 4)
@@ -244,7 +244,7 @@ In this order:
 |---|---|
 | `http://<ps5>:8710` | the page from the console. It reads `on_console:true` from its own `/api/health`, then asks `/api/companion` for the PCs that announced themselves and re-points its API at the newest one. Installs from a PC work from here. With no PC on, it runs console-only: what is installed, backups already on a drive, cheats and patches - but a package that lives on a PC cannot be installed |
 | `http://<pc>:8710` | the same page from the PC; everything comes from the PC |
-| the **PKG MUTANT SHOP** tile under Media | opens `http://127.0.0.1:8710/` in the PS5's browser - the first row above |
+| the **MarkPS4 Themes** tile under Media | opens `http://127.0.0.1:8710/` in the PS5's browser - the first row above |
 
 One page for every device: PS5 WebKit, PC browsers, iPhone Safari. It is plain ES5 on purpose.
 
@@ -257,7 +257,7 @@ Install pressed (any device)
   -> the PC's queue takes the job (one running install per console; two transfers across consoles)
   -> the PC checks the package fits its own PFS image (warns, does not block, by default)
   -> GET http://<ps5>:8710/api/engine/install-spawn?uri=http://<pc>:8710/library/<key>&name=<title>
-  -> the ELF writes /data/pkg-mutant-shop/installer-req.txt (URI, name, a per-request token),
+  -> the ELF writes /data/MARKPS4-THEMES/installer-req.txt (URI, name, a per-request token),
      writes its embedded pms-installer.elf to /data/pldmgr/payloads/pms-installer/, and asks
      Payload Manager (:8084 /loadpayload:) to SPAWN it
   -> pms-installer.elf, a fresh process, calls sceAppInstUtilInstallByPackage(uri),
@@ -294,22 +294,22 @@ kernel, with expected-bytes checks and revert). No third-party cheat engine is i
 ### 5.1 The ELF (the console)
 
 ```
-python companion/deploy.py elf [path\to\PKG-MUTANT-SHOP.elf] [--ip <console>] [--expect 3.87.0]
+python companion/deploy.py elf [path\to\MARKPS4-THEMES.elf] [--ip <console>] [--expect 3.87.0]
 ```
 
 It first checks that Payload Manager answers on `:8084` and that the shop is not in the middle of a
 download, install hand-off or move (`--force` overrides), then uploads over FTP (2121, then 1337) to
 the registered path as `.part`, verifies the size, keeps the old copy as
-`/data/pkg-mutant-shop/PKG-MUTANT-SHOP.elf.prev`, renames, asks the running shop to quit, **waits for the shop
+`/data/MARKPS4-THEMES/MARKPS4-THEMES.elf.prev`, renames, asks the running shop to quit, **waits for the shop
 to acknowledge the quit and then for two consecutive failed connects to `:8710`** - on these
 consoles a port that has stopped listening times out rather than refusing, so waiting for a refusal
 would hang for ever, and one failed connect on its own can just be a busy accept loop - loads
 through Payload Manager, and polls
 `/api/health` until `version` is the expected one. By hand, the same four steps:
 
-1. FTP the ELF over `/data/pldmgr/payloads/PKG-MUTANT-SHOP/PKG-MUTANT-SHOP.elf` (`.part`, then rename)
+1. FTP the ELF over `/data/pldmgr/payloads/MARKPS4-THEMES/MARKPS4-THEMES.elf` (`.part`, then rename)
 2. `GET http://<ps5>:8710/api/quit` and wait for `:8710` to close
-3. `GET http://<ps5>:8084/loadpayload:/data/pldmgr/payloads/PKG-MUTANT-SHOP/PKG-MUTANT-SHOP.elf`
+3. `GET http://<ps5>:8084/loadpayload:/data/pldmgr/payloads/MARKPS4-THEMES/MARKPS4-THEMES.elf`
 4. `GET http://<ps5>:8710/api/health` - check **both** `version` and `built` (the compile stamp).
    Same `built` as before = the old process is still running and owns the port.
 
@@ -326,21 +326,21 @@ sending it to a console is a second, separate press.
 
 ### 5.3 The exe (the PC)
 
-**It updates itself.** Open **Payloads & Homebrews -> Updates** and take the PKG MUTANT SHOP row:
+**It updates itself.** Open **Payloads & Homebrews -> Updates** and take the MarkPS4 Themes row:
 the app replaces its own exe, starts the new build and closes the old one, once you have stopped
 taking updates. `config.json`, `installed.json` and `.cache\` beside it are kept. Set
 `updates.auto_restart` to `false` in `config.json` to be told to reopen it instead.
 
 By hand, if you prefer: quit the tray app (right-click the tray icon - Quit), copy the new
-`PKG-MUTANT-SHOP.exe` over the old one, start it. The copy silently does nothing while the app is
+`MARKPS4-THEMES.exe` over the old one, start it. The copy silently does nothing while the app is
 running - Windows will not replace a mapped image - so quit first and check the version afterwards.
 
 ### 5.4 Building
 
-- exe: `build_exe.cmd` (runs `companion/PKG-MUTANT-SHOP.spec`, whose gates - version stamp, UI
+- exe: `build_exe.cmd` (runs `companion/MARKPS4-THEMES.spec`, whose gates - version stamp, UI
   parse check, i18n, message style, storage-tile test - are all fatal). Output `companion/dist/`.
 - PS5 ELF: in WSL, `bash ps5-app/onconsole/build-wsl.sh` (syntax pass, the installer first, the
-  same gates, both bundles, then the link). Output `ps5-app/onconsole/PKG-MUTANT-SHOP.elf`.
+  same gates, both bundles, then the link). Output `ps5-app/onconsole/MARKPS4-THEMES.elf`.
 - PS4 ELF: in WSL, `bash ps4-app/build-all-wsl.sh` - **the whole chain, not just the ELF.** The
   home-screen icon package carries its own copy of the payload, so building only the ELF leaves a
   stale icon that re-loads the previous build. This had no entry here at all.
