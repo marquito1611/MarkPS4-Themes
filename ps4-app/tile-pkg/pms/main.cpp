@@ -227,49 +227,28 @@ static Color shade(Color c, int d) {
     o.b = (uint8_t)(c.b > d ? c.b-d : 0);
     return o;
 }
-/* Rounded-look panels are rasterized from horizontal slices so no external graphics
-   dependency is required. Soft layered shadows provide a restrained 3D lift. */
+/* Clean flat geometry: one surface per component, no stacked rectangles,
+   fake depth, borders or glossy strips. */
 static void roundPanel(Scene2D *s, int x, int y, int w, int h, int r, Color c) {
-    if (w < 2 || h < 2) return;
-    if (r < 1) { panel(s,x,y,w,h,c); return; }
-    if (r > h/2) r = h/2;
-    if (r > w/2) r = w/2;
-    for (int yy=0; yy<h; ++yy) {
-        int inset=0;
-        if (yy<r) {
-            int dy=r-yy;
-            inset=r-(int)sqrt((double)(r*r-dy*dy));
-        } else if (yy>=h-r) {
-            int dy=yy-(h-r-1);
-            inset=r-(int)sqrt((double)(r*r-dy*dy));
-        }
-        if (w-2*inset>0) panel(s,x+inset,y+yy,w-2*inset,1,c);
-    }
+    (void)r;
+    if (w > 0 && h > 0) panel(s, x, y, w, h, c);
 }
 static void liftedPanel(Scene2D *s, int x, int y, int w, int h, Color c, bool active) {
-    roundPanel(s,x+2,y+9,w,h,18,{2,4,9});
-    roundPanel(s,x,y+4,w,h,18,{7,12,21});
-    roundPanel(s,x,y,w,h,18,c);
-    roundPanel(s,x+2,y+2,w-4,2,8,active?BLUE:PANEL2);
+    if (w <= 0 || h <= 0) return;
+    panel(s, x, y, w, h, c);
     if (active) {
-        roundPanel(s,x+5,y+7,4,h-14,2,BLUE);
-        roundPanel(s,x+w-9,y+12,3,h-24,1,{0,91,151});
+        panel(s, x, y, 5, h, BLUE);
     }
 }
 static void render(Scene2D *s, int selected, int page) {
     const int t = frameID;
-    const int pulse = (t / 3) % 28;
+    (void)t;
     (void)selected;
     s->FrameBufferClear();
     s->FrameBufferFill(BG);
 
-    // Full-width, high-contrast blue ambient backdrop.
-    for (int i=0; i<9; ++i) {
-        int yy = (i*137 + (t/6)%137) % H;
-        panel(s, 0, yy, W, 1, {9,19,34});
-    }
-    panel(s, 0, 0, W, 8, BLUE);
-    panel(s, 0, 0, 510, 3, BLUE_DARK);
+    // Quiet, uncluttered backdrop with a single brand accent.
+    panel(s, 0, 0, W, 4, BLUE);
 
     // Header / brand.
     roundPanel(s, 32, 27, 92, 92, 20, {0,4,12});
@@ -334,8 +313,7 @@ static void render(Scene2D *s, int selected, int page) {
         const char *subs[3] = {"TEMA COMPLETO / 2 PKG", "CATALOGO EN EXPANSION", "MAS TEMAS MUY PRONTO"};
         for (int i=0; i<3; ++i) {
             bool active = (i == 0);
-            int bob = active ? (pulse < 14 ? pulse/7 : (27-pulse)/7) : 0;
-            int y = 354 - bob;
+            int y = 354;
             liftedPanel(s, xs[i], y, 574, 356, active ? Color{16,33,52} : PANEL, active);
             roundPanel(s, xs[i]+20, y+20, 534, 4, 1, active ? BLUE : PANEL2);
             if (active) {
