@@ -151,13 +151,14 @@ static int startPackageInstall(int userId, int index) {
     return 0;
 }
 
-static const Color BG       = { 12, 14, 20 };
-static const Color PANEL    = { 25, 29, 39 };
-static const Color PANEL2   = { 34, 39, 51 };
-static const Color YELLOW   = { 255, 210, 45 };
-static const Color WHITE    = { 245, 246, 250 };
-static const Color MUTED    = { 153, 162, 179 };
-static const Color BLACK    = { 12, 14, 20 };
+static const Color BG       = { 8, 11, 18 };       // #080b12
+static const Color PANEL    = { 16, 23, 35 };      // #101723
+static const Color PANEL2   = { 23, 34, 52 };     // #172234
+static const Color BLUE     = { 0, 186, 255 };    // #00baff
+static const Color BLUE_DARK= { 8, 124, 255 };    // #087cff
+static const Color WHITE    = { 244, 248, 255 };  // #f4f8ff
+static const Color MUTED    = { 141, 155, 176 };  // #8d9bb0
+static const Color BLACK    = { 0, 17, 27 };
 
 static const uint8_t *glyph(char c) {
     static const uint8_t blank[7] = {0,0,0,0,0,0,0};
@@ -226,51 +227,93 @@ static void panel(Scene2D *s, int x, int y, int w, int h, Color c) {
 }
 
 static void render(Scene2D *s, int selected, int page) {
+    (void)selected;
     s->FrameBufferClear();
     s->FrameBufferFill(BG);
-    panel(s,0,0,W,12,YELLOW);
-    text(s,"MARKPS4 THEMES",92,66,7,WHITE);
-    text(s,"TIENDA NATIVA PARA PS4",96,132,3,MUTED);
-    panel(s,70,215,1780,2,PANEL2);
-    const char *tabs[]={"CATALOGO","INSTALADOS","AJUSTES"};
-    for (int i=0;i<3;i++) {
-        int x=90+i*285;
-        panel(s,x,185,245,66,(page==i)?YELLOW:PANEL);
-        text(s,tabs[i],x+20,207,3,(page==i)?BLACK:WHITE);
-    }
+
+    // Panel lateral inspirado en el diseño web original de MarkPS4.
+    panel(s,0,0,315,H,PANEL);
+    panel(s,314,0,2,H,{25,48,69});
+    panel(s,0,0,6,H,BLUE);
+    text(s,"MARK",38,52,7,WHITE);
+    text(s,"PS4",38,104,7,BLUE);
+    text(s,"THEME CENTER",40,166,2,MUTED);
+    panel(s,35,220,245,2,PANEL2);
+
+    panel(s,28,252,260,72,page==0?PANEL2:PANEL);
+    if (page==0) panel(s,28,252,5,72,BLUE);
+    text(s,"TEMAS",55,280,3,page==0?WHITE:MUTED);
+
+    panel(s,28,340,260,72,page==1?PANEL2:PANEL);
+    if (page==1) panel(s,28,340,5,72,BLUE);
+    text(s,"INSTALADOS",55,368,3,page==1?WHITE:MUTED);
+
+    panel(s,35,435,245,2,PANEL2);
+    text(s,"MARKPS4",40,465,3,BLUE);
+    text(s,"APP NATIVA PS4",40,500,2,MUTED);
+    text(s,"L1 / R1 SECCIONES",40,1000,2,MUTED);
+
+    // Main content.
+    text(s,"BIBLIOTECA DE TEMAS",370,58,5,WHITE);
+    text(s,page==0?"PERSONALIZA TU PS4 A TU ESTILO":"CONSULTA TUS TEMAS REGISTRADOS",372,112,2,MUTED);
+    panel(s,1570,55,270,48,PANEL2);
+    panel(s,1570,55,3,48,BLUE);
+    text(s,"MARKPS4  /  PS4",1590,74,2,BLUE);
+    panel(s,370,150,1470,2,PANEL2);
+
     if (page==0) {
-        text(s,"ASSASSIN'S CREED",95,300,6,WHITE);
-        text(s,"PAQUETES OFICIALES DE TU REPOSITORIO MARKPS4",98,365,3,MUTED);
-        panel(s,95,430,1730,170,PANEL2);
-        panel(s,115,450,12,130,YELLOW);
-        text(s,"INSTALA LOS DOS PAQUETES EN ORDEN",155,465,4,WHITE);
-        text(s,"ESPERA EL AVISO DE INSTALACION COMPLETA ANTES DEL PAQUETE 2",155,490,2,MUTED);
-        text(s,"SELECCIONA UN PAQUETE Y PULSA X PARA ENVIARLO A DESCARGAS",155,525,2,MUTED);
+        text(s,"TEMA DESTACADO",372,190,2,BLUE);
+        panel(s,370,225,1470,285,PANEL);
+        panel(s,370,225,7,285,BLUE);
+        // Decorative blue artwork block to echo the reference theme card.
+        panel(s,405,250,285,235,BG);
+        panel(s,405,250,285,3,BLUE);
+        panel(s,405,482,285,3,BLUE_DARK);
+        text(s,"AC",485,315,8,BLUE);
+        text(s,"THEME",462,390,3,WHITE);
+        text(s,"ASSASSIN'S CREED",730,260,5,WHITE);
+        text(s,"PAQUETES DE TEMAS PARA PS4",733,320,2,MUTED);
+        panel(s,730,355,220,34,PANEL2);
+        text(s,"TEMA PARA PS4",746,366,2,BLUE);
+        text(s,"INSTALA LOS DOS PAQUETES EN ORDEN",730,420,2,WHITE);
+        text(s,"ESPERA EL AVISO DE INSTALACION ANTES DEL PAQUETE 2",730,453,2,MUTED);
+
+        text(s,"PAQUETES DISPONIBLES",372,555,2,BLUE);
         for (int i=0;i<2;i++) {
-            int y=640+i*130;
-            panel(s,95,y,1730,105,(selectedPackage==i)?YELLOW:PANEL);
-            Color tc=(selectedPackage==i)?BLACK:WHITE;
-            text(s,i==0?"PAQUETE 1":"PAQUETE 2",130,y+24,4,tc);
-            text(s,i==0?"1-EP0001-CUSA09303...V0100.PKG":"2-EP0001-CUSA09303...PKG",500,y+28,2,tc);
-            text(s,"PULSA X PARA INSTALAR",1390,y+35,2,tc);
+            int y=590+i*135;
+            panel(s,370,y,1470,112,(selectedPackage==i)?PANEL2:PANEL);
+            panel(s,370,y,5,112,(selectedPackage==i)?BLUE:PANEL2);
+            panel(s,395,y+20,64,64,(selectedPackage==i)?BLUE:PANEL2);
+            text(s,i==0?"01":"02",410,y+42,3,(selectedPackage==i)?BLACK:BLUE);
+            text(s,i==0?"PAQUETE 1":"PAQUETE 2",490,y+24,3,WHITE);
+            text(s,i==0?"1-EP0001-CUSA09303...V0100.PKG":"2-EP0001-CUSA09303...PKG",490,y+63,2,MUTED);
+            panel(s,1515,y+27,270,55,(selectedPackage==i)?BLUE:BG);
+            text(s,"PULSA X PARA INSTALAR",1530,y+48,2,(selectedPackage==i)?BLACK:BLUE);
         }
-        text(s,"ESTADO:",98,930,2,MUTED);
-        text(s,installStatus,270,930,2,YELLOW);
-        text(s,"D-PAD: ELEGIR PAQUETE   X: INICIAR   L1/R1: SECCIONES",98,985,2,MUTED);
+
+        panel(s,370,890,1470,66,PANEL);
+        panel(s,370,890,5,66,BLUE);
+        text(s,"ESTADO",395,914,2,MUTED);
+        text(s,installStatus,520,914,2,BLUE);
+        text(s,"D-PAD: ELEGIR PAQUETE     X: INSTALAR     L1/R1: SECCIONES",372,990,2,MUTED);
     } else if (page==1) {
-        text(s,"TEMAS INSTALADOS",95,310,5,WHITE);
-        text(s,"EL SISTEMA PS4 GESTIONA LAS INSTALACIONES Y SUS NOTIFICACIONES",98,390,3,MUTED);
-        panel(s,95,470,1730,220,PANEL);
-        text(s,"REVISA NOTIFICACIONES Y DESCARGAS DEL PS4",135,545,4,WHITE);
+        text(s,"TU COLECCION",372,190,2,BLUE);
+        panel(s,370,225,1470,230,PANEL);
+        panel(s,370,225,7,230,BLUE);
+        text(s,"TEMAS INSTALADOS",410,280,4,WHITE);
+        text(s,"EL SISTEMA PS4 GESTIONA LAS INSTALACIONES Y NOTIFICACIONES",412,340,2,MUTED);
+        text(s,"REVISA DESCARGAS Y NOTIFICACIONES DEL PS4",412,390,2,BLUE);
     } else {
-        text(s,"AJUSTES",95,310,5,WHITE);
-        panel(s,95,400,1730,110,PANEL);
-        text(s,"MARKPS4 THEMES - INTERFAZ NATIVA",130,440,3,WHITE);
-        panel(s,95,535,1730,110,PANEL);
-        text(s,"SIN NAVEGADOR PARA MOSTRAR LA INTERFAZ",130,575,3,WHITE);
-        panel(s,95,670,1730,110,PANEL);
-        text(s,"LA INSTALACION USA BGFT SI EL FIRMWARE DA ACCESO",130,710,3,WHITE);
+        text(s,"AJUSTES",372,190,2,BLUE);
+        const char *settings[]={"MARKPS4 THEMES - INTERFAZ NATIVA","SIN NAVEGADOR PARA MOSTRAR LA INTERFAZ","INSTALACION BGFT SEGUN ACCESO DEL FIRMWARE"};
+        for (int i=0;i<3;i++) {
+            int y=240+i*130;
+            panel(s,370,y,1470,100,PANEL);
+            panel(s,370,y,5,100,BLUE);
+            text(s,settings[i],410,y+40,2,WHITE);
+        }
     }
+
     s->SubmitFlip(frameID);
     s->FrameWait(frameID);
     s->FrameBufferSwap();
