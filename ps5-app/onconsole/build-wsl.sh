@@ -93,8 +93,8 @@ python3 "$HERE/gen_cheat_bundle.py" "$HERE/../../assets/cheats" "$HERE/cheat_bun
 # on a release page. This rewrites recorded paths only - it does not touch codegen, so the
 # rule above (-g, never -O2, because -O2 breaks installs) still holds.
 "$SDK/bin/prospero-clang" -Wall -g -ffile-prefix-map="$HOME"=/build -DPORT="$PORT" \
-  -o "$HERE/PKG-MUTANT-SHOP.elf" "$HERE/server.c" "$HERE/jb.c" \
+  -o "$HERE/MARKPS4-THEMES.elf" "$HERE/server.c" "$HERE/jb.c" \
   -lkernel_sys -lSceNotification -lSceUserService -lSceSystemService \
   -lSceAppInstUtil -lScePad -lSceSsl -lSceHttp
-echo "BUILT: $HERE/PKG-MUTANT-SHOP.elf"
-file "$HERE/PKG-MUTANT-SHOP.elf"
+echo "BUILT: $HERE/MARKPS4-THEMES.elf"
+file "$HERE/MARKPS4-THEMES.elf"
