@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build the PS4 on-console payload (the PS4 half of PKG MUTANT SHOP).
+# Build the PS4 on-console payload (the PS4 half of MarkPS4 Themes).
 #
 # This is the sibling of ps5-app/onconsole/build-wsl.sh and deliberately runs THE SAME GATES: the
 # two payloads share one web UI, and a UI that will not parse, a language missing a key, or a
@@ -105,13 +105,13 @@ python3 "$TOOLS/ps4_sync_github_lane.py" --check \
 # THE DASHBOARD APP THIS ELF CARRIES. tile_bundle.h .incbin's it, so a missing package is a link
 # error with no explanation; say so here instead. Build order is the package first, then this - and
 # it is one-way on purpose: the package must never carry this ELF back (see tile_bundle.h).
-TILE_PKG="$HERE/../tile-pkg/IV0000-PKGM00001_00-PKGMUTANTSHOP001.pkg"
+TILE_PKG="$HERE/../tile-pkg/IV0000-PKGM00001_00-MARKPS4THEMES001.pkg"
 if [ "$LITE" = "1" ]; then
   EXTRA="-DPMS_LITE"
-  OUT="$HERE/PKG-MUTANT-SHOP-PS4-LITE.elf"
+  OUT="$HERE/MARKPS4-THEMES-PS4-LITE.elf"
 else
   EXTRA=""
-  OUT="$HERE/PKG-MUTANT-SHOP-PS4.elf"
+  OUT="$HERE/MARKPS4-THEMES-PS4.elf"
   if [ ! -f "$TILE_PKG" ]; then
     echo "ABORT: the PS4 home-screen app is not built - run ps4-app/build-all-wsl.sh." >&2
     exit 1
