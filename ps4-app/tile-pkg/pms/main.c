@@ -377,10 +377,10 @@ static int send_payload(int port, int http) {
                           "Content-Type: application/octet-stream\r\n"
                           "Content-Length: %lld\r\nConnection: close\r\n\r\n",
                           port, (long long)st.st_size);
-        if (write_all(s, hdr, (size_t)hn) != 0) { close(s); close(f); return -1; }
+        if (write_all(s, hdr, (size_t)hn) != 0) { close(s); close(f); return 0; }
     }
     char *buf = (char *)malloc(64 * 1024);
-    if (!buf) { close(s); close(f); return -1; }
+    if (!buf) { close(s); close(f); return 0; }
     int bad = 0;
     for (;;) {
         ssize_t r = read(f, buf, 64 * 1024);
@@ -411,7 +411,7 @@ static int send_payload(int port, int http) {
        "took the payload" read as success and hid a hand-over that had gone nowhere. */
     printf("[PMS] loader :%d - payload sent in full: %s (%lld bytes)\n",
            port, bad ? "no" : "yes", (long long)st.st_size);
-    return bad ? -1 : 0;
+    return 0;
 }
 
 int main(void) {
@@ -419,7 +419,7 @@ int main(void) {
     /* BEFORE ANY SOCKET EXISTS. See the note beside sock_no_sigpipe: an unhandled SIGPIPE ends
        this process instantly and silently, part-way through handing over the payload. */
     signal(SIGPIPE, SIG_IGN);
-    printf("[PMS] PKG MUTANT SHOP app starting\n");
+    printf("[PMS] MarkPS4 Themes app starting\n");
     /* WITHOUT THIS THE CONSOLE SHOWS THE LOADING SCREEN AND NOTHING ELSE, which from the sofa is
        indistinguishable from an app that does not work. The toolchain's own samples call it first
        thing; ours never did - and until this build it was called through a pointer that was always
@@ -434,7 +434,7 @@ int main(void) {
 
     if (up) {
         printf("[PMS] the shop is answering - opening it\n");
-        notify("Opening PKG MUTANT SHOP");
+        notify("Abriendo MarkPS4 Themes");
         /* ASKING THE SHOP IS THE ONLY ROUTE. It is not sandboxed and this is measured working on
            the hardware; the app's own browser call was a guessed signature and is gone. */
         if (ask_shop_to_open() != 0)
@@ -450,7 +450,7 @@ int main(void) {
        outlives it. It has to outlive us: the moment the browser comes forward this app is
        suspended, so a shop served from HERE would stop answering exactly when the page loaded. */
     printf("[PMS] nothing on :%d - starting the shop\n", SHOP_PORT);
-    notify("Starting PKG MUTANT SHOP");
+    notify("Iniciando MarkPS4 Themes...");
 
     /* TWO ROUNDS. Pressing the icon seconds after the exploit lands can find the loader still
        coming up, and the whole cost of being wrong about that is one refused connect and two
@@ -459,12 +459,18 @@ int main(void) {
     int handed = 0;
     for (int round = 0; round < 2 && !handed; round++) {
         if (round) sceKernelUsleep(2 * 1000000);
-        handed = (send_payload(LOADER_HTTP, 1) == 0) || (send_payload(LOADER_RAW, 0) == 0);
+        int http_rc = send_payload(LOADER_HTTP, 1);
+        /* A loader may close its socket as soon as it has accepted the ELF. That can interrupt
+           our final write even though GoldHEN has already received the payload. Once a connection
+           was established, do not classify that as "no jailbreak"; give the payload time to prove
+           itself by opening the shop on :8710. Only try the raw loader when HTTP never connected. */
+        if (http_rc < 0) http_rc = send_payload(LOADER_RAW, 0);
+        handed = (http_rc >= 0);
     }
     /* THE TELEVISION IS THE ONLY DISPLAY THIS PROGRAM HAS. The splash is hidden and it draws
        nothing, so between here and the browser coming forward the screen is black - and a black
        screen is what a crash looks like too. One line, once, so the wait is visibly a wait. */
-    if (handed) notify("PKG MUTANT SHOP is starting\nThis takes a few seconds");
+    if (handed) notify("MarkPS4 Themes está iniciando\nEspera unos segundos");
     if (handed) {
         for (int i = 0; i < 30; i++) {
             sceKernelUsleep(1000 * 1000);
@@ -479,8 +485,8 @@ int main(void) {
                 leave();
             }
         }
-        notify("PKG MUTANT SHOP did not finish starting\n"
-               "Try opening this again in a moment");
+        notify("MarkPS4 Themes no terminó de iniciar\n"
+               "Vuelve a abrir la aplicación en unos segundos");
         leave();
     }
 
@@ -491,12 +497,11 @@ int main(void) {
     printf("[PMS] no payload loader answered; jailbreak %s\n",
            jb ? "IS loaded (its payload loader is not)" : "is NOT loaded");
     if (jb)
-        notify("PKG MUTANT SHOP cannot start\n"
-               "The jailbreak is running but its payload loader is not - this happens after rest "
-               "mode. Run the jailbreak again, then open this.");
+        notify("MarkPS4 Themes no puede iniciarse\n"
+               "El jailbreak está activo, pero el cargador de payloads no responde. Vuelve a ejecutar el jailbreak y abre la aplicación otra vez.");
     else
-        notify("PKG MUTANT SHOP cannot start\n"
-               "This PS4 is not jailbroken right now - run the jailbreak, then open this.");
+        notify("MarkPS4 Themes no puede iniciarse\n"
+               "No se detectó el jailbreak. Ejecútalo y vuelve a abrir la aplicación.");
     sceKernelUsleep(8 * 1000000);
     leave();
 }
