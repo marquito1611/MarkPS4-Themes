@@ -64,7 +64,7 @@ jobs:
           out = ["#pragma once", "/* Generated from the real PKG files by GitHub Actions. */"]
           for n, path, drive_id in pairs:
               data = pathlib.Path(path).read_bytes()
-              if len(data) < 0x70 or data[:4] != b"\x7fPKG":
+              if len(data) < 0x70 or data[:4] != b"\x7fCNT":
                   raise SystemExit(f"Package {n} is not a valid PS4 PKG header")
               cid = data[0x40:0x70].split(b"\0", 1)[0].decode("ascii", "strict")
               if len(cid) < 20 or "-" not in cid or "_" not in cid:
