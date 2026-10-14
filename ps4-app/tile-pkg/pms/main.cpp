@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <sstream>
 #include <stdint.h>
 #include <string.h>
 #include <orbis/Pad.h>
@@ -7,6 +8,9 @@
 
 #define W 1920
 #define H 1080
+
+std::stringstream debugLogStream;
+static int frameID = 0;
 
 static const Color BG       = { 12, 14, 20 };
 static const Color PANEL    = { 25, 29, 39 };
@@ -135,4 +139,54 @@ static void render(Scene2D *s, int selected, int page) {
         text(s,"SIN NAVEGADOR NI BINLOADER PARA DIBUJAR ESTA PANTALLA",130,710,3,WHITE);
     }
     s->SubmitFlip(frameID);
+    s->FrameWait(frameID);
+    s->FrameBufferSwap();
+    ++frameID;
 }
+
+int main() {
+    setvbuf(stdout, NULL, _IONBF, 0);
+    Scene2D *scene = new Scene2D(W, H, 4);
+    if (!scene->Init(0xC000000, 2)) {
+        printf("[MarkPS4 Themes] No se pudo iniciar el renderizador nativo.\\n");
+        for (;;) sceKernelUsleep(1000000);
+    }
+
+    int userID = -1;
+    OrbisUserServiceInitializeParams params;
+    memset(&params, 0, sizeof(params));
+    params.priority = ORBIS_KERNEL_PRIO_FIFO_LOWEST;
+    (void)sceUserServiceInitialize(&params);
+    (void)sceUserServiceGetInitialUser(&userID);
+    (void)scePadInit();
+    int pad = (userID >= 0) ? scePadOpen(userID, 0, 0, NULL) : -1;
+    uint32_t previous = 0;
+    int selected = 0;
+    int page = 0;
+
+    for (;;) {
+        if (pad >= 0) {
+            OrbisPadData data;
+            memset(&data, 0, sizeof(data));
+            if (scePadReadState(pad, &data) == 0) {
+                uint32_t now = data.buttons;
+                uint32_t pressed = now & ~previous;
+                if (pressed & ORBIS_PAD_BUTTON_LEFT) selected = (selected + 3) % 4;
+                if (pressed & ORBIS_PAD_BUTTON_RIGHT) selected = (selected + 1) % 4;
+                if (pressed & ORBIS_PAD_BUTTON_UP) selected = (selected + 3) % 4;
+                if (pressed & ORBIS_PAD_BUTTON_DOWN) selected = (selected + 1) % 4;
+                if (pressed & ORBIS_PAD_BUTTON_L1) page = (page + 2) % 3;
+                if (pressed & ORBIS_PAD_BUTTON_R1) page = (page + 1) % 3;
+                if (pressed & ORBIS_PAD_BUTTON_CROSS) {
+                    /* Selection is visual only until a real theme-package catalog is connected. */
+                }
+                if (pressed & ORBIS_PAD_BUTTON_CIRCLE) page = 0;
+                previous = now;
+            }
+        }
+        render(scene, selected, page);
+        sceKernelUsleep(16000);
+    }
+    return 0;
+}
+
