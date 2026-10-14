@@ -42,7 +42,7 @@ OBJS        := $(patsubst $(PROJDIR)/%.cpp, $(INTDIR)/%.o, $(CPPFILES)) $(patsub
 
 CFLAGS      := --target=x86_64-pc-freebsd12-elf -fPIC -funwind-tables -c $(EXTRAFLAGS) \
                -isysroot $(TOOLCHAIN) -isystem $(TOOLCHAIN)/include
-CXXFLAGS    := $(CFLAGS) -isystem $(TOOLCHAIN)/include/c++/v1
+CXXFLAGS    := $(CFLAGS) -I$(COMMONDIR) -isystem $(TOOLCHAIN)/include/c++/v1
 LDFLAGS     := -m elf_x86_64 -pie --script $(TOOLCHAIN)/link.x --eh-frame-hdr -L$(TOOLCHAIN)/lib \
                $(LIBS) $(TOOLCHAIN)/lib/crt1.o
 
