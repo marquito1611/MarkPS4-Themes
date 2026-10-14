@@ -74,11 +74,11 @@ a = Analysis(
     # Forward slashes on purpose: PyInstaller accepts them and a backslash before 't' in
     # 'tile-pkg' is a tab in any string that is not raw.
     datas=[('../web', 'web'),
-           ('../ps4-app/tile-pkg/IV0000-PKGM00001_00-PKGMUTANTSHOP001.pkg', 'ps4-tile'),
+           ('../ps4-app/tile-pkg/IV0000-PKGM00001_00-MARKPS4THEMES001.pkg', 'ps4-tile'),
            # The PS4 payload, so this exe can bring a PS4's shop up with nobody pressing
            # the icon. A GoldHEN payload does not survive a reboot and there is no autoload
            # folder on that console, so without this the only route back is the icon.
-           ('../ps4-app/onconsole/PKG-MUTANT-SHOP-PS4.elf', 'ps4-elf'),
+           ('../ps4-app/onconsole/MARKPS4-THEMES-PS4.elf', 'ps4-elf'),
            # THE CHEAT LIBRARY, as ONE archive (tools/pack_cheats.py). A PS5 carries its own copy
            # inside its ELF; a PS4 cannot, so it takes the library from the PC - and until this
            # line the shipped exe had none to give, which made cheats a repo-only feature on that
@@ -112,7 +112,7 @@ exe = EXE(
     a.binaries,
     a.datas,
     [],
-    name='PKG-MUTANT-SHOP',
+    name='MARKPS4-THEMES',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
