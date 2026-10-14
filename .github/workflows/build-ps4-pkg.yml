@@ -1,0 +1,51 @@
+name: Build PS4 PKG Mutant Shop
+
+on:
+  push:
+    branches: [master, main]
+    paths:
+      - "ps4-app/**"
+      - "tools/**"
+      - "web/**"
+      - ".github/workflows/build-ps4-pkg.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-ps4:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential clang-18 lld-18 llvm-18 python3 python3-pip git curl make unzip zip dpkg-dev
+          mkdir -p "$HOME/clang18/usr/lib"
+          ln -sfn /usr/lib/llvm-18 "$HOME/clang18/usr/lib/llvm-18"
+          mkdir -p "$HOME/bin"
+          ln -sfn /usr/bin/clang-18 "$HOME/bin/clang"
+          ln -sfn /usr/bin/ld.lld-18 "$HOME/bin/ld.lld"
+          echo "$HOME/bin" >> "$GITHUB_PATH"
+
+      - name: Build PS4 payloads and PKG
+        run: |
+          export PATH="$HOME/clang18/usr/lib/llvm-18/bin:$HOME/bin:$PATH"
+          bash ps4-app/build-all-wsl.sh
+
+      - name: Verify package exists
+        run: |
+          test -s ps4-app/tile-pkg/IV0000-PKGM00001_00-PKGMUTANTSHOP001.pkg
+          ls -lh ps4-app/tile-pkg/IV0000-PKGM00001_00-PKGMUTANTSHOP001.pkg
+
+      - name: Upload installable PS4 PKG
+        uses: actions/upload-artifact@v4
+        with:
+          name: PKG-MUTANT-SHOP-PS4
+          path: ps4-app/tile-pkg/IV0000-PKGM00001_00-PKGMUTANTSHOP001.pkg
+          if-no-files-found: error
+          retention-days: 14
