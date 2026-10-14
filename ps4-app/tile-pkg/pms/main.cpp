@@ -335,7 +335,6 @@ static void render(Scene2D *s, int selected, int page) {
         text(s,"ESTADO",395,684,2,MUTED);
         text(s,installStatus,520,684,2,BLUE);
         text(s,"X: INSTALAR TEMA    L1/R1: SECCIONES",372,770,2,MUTED);
-    }
     } else if (page==1) {
         text(s,"TU COLECCION",372,190,2,BLUE);
         panel(s,370,225,1470,230,PANEL);
